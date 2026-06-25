@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: notiq
+      POSTGRES_USER: notiq
+      POSTGRES_PASSWORD: notiq
+    ports:
+      - "5432:5432"
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: notiq
+      RABBITMQ_DEFAULT_PASS: notiq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  notiq-api:
+    build: ./services/notiq-api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  notiq-worker:
+    build: ./services/notiq-worker
+    depends_on:
+      - postgres
+      - rabbitmq

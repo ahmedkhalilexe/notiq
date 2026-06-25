@@ -1,0 +1,23 @@
+{
+  "name": "notiq-api",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun --watch src/main.ts",
+    "start": "bun src/main.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "pg": "^8.22.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "amqplib": "^2.0.1",
+    "express": "^5.2.1",
+    "knex": "^3.2.10"
+  }
+}
