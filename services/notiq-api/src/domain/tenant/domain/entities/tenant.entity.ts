@@ -1,4 +1,6 @@
 import type { DomainEvent } from "../../../shared/events";
+import { TenantEmailInvalidError } from "../errors/tenant-email-invalid.error";
+import { TenantNameInvalidError } from "../errors/tenant-name-invalid.error";
 import { TenantCreatedEvent } from "../events/tenant-created.event";
 import { ApiKey } from "../value-objetcs/api-key.vo";
 import { Password } from "../value-objetcs/password.vo";
@@ -23,11 +25,17 @@ export class Tenant {
     email: string;
     password: Password;
   }): Tenant {
-    if (name.length < 2) {
-      throw new Error("Tenant name must be at least 2 characters");
+    const trimmedName = name.trim();
+
+    if (trimmedName.length < 2 || trimmedName.length > 100) {
+      throw new TenantNameInvalidError();
     }
-    if (email.length < 4) {
-      throw new Error("Tenant email must be at least 4 characters");
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(normalizedEmail) || normalizedEmail.length > 255) {
+      throw new TenantEmailInvalidError();
     }
 
     const id = crypto.randomUUID();
