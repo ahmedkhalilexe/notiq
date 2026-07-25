@@ -10,5 +10,14 @@ export function createTenantRoutes(controller: TenantController): Router {
     asyncHandler((req, res) => controller.create(req, res)),
   );
 
+  router.get(
+    "/:id",
+    asyncHandler((req, res) => controller.findById(req, res)),
+  );
+
+  router.get(
+    "/",
+    asyncHandler((req, res) => controller.list(req, res)),
+  );
   return router;
 }

@@ -5,6 +5,8 @@ import { TenantRepository } from "../../domain/tenant/infrastructure/persistence
 import { ConsoleEventDispatcher } from "../shared/console-event-dispatcher";
 import { createTenantRoutes } from "../../domain/tenant/infrastructure/http/tenant.routes";
 import { db } from "../database/connection";
+import { FindByIdTenantUsecase } from "../../domain/tenant/application/use-cases/get-tenant.use-case";
+import { ListTenantUsecase } from "../../domain/tenant/application/use-cases/list-tenant.use-case";
 export function createRoutes(): Router {
   const router = Router();
   const consoleEventDispatcher = new ConsoleEventDispatcher();
@@ -15,7 +17,19 @@ export function createRoutes(): Router {
     tenantRepository,
     consoleEventDispatcher,
   );
-  const tenantController = new TenantController(createTenantUsecase);
+  const findByIdTenantUsecase = new FindByIdTenantUsecase(
+    tenantRepository,
+    consoleEventDispatcher,
+  );
+  const listTenantUsecase = new ListTenantUsecase(
+    tenantRepository,
+    consoleEventDispatcher,
+  );
+  const tenantController = new TenantController(
+    createTenantUsecase,
+    findByIdTenantUsecase,
+    listTenantUsecase,
+  );
   router.use("/tenants", createTenantRoutes(tenantController));
 
   return router;

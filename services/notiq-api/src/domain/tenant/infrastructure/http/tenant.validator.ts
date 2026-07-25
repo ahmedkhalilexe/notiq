@@ -40,3 +40,11 @@ export const createTenantSchema = Joi.object({
       "string.empty": "Password is required",
     }),
 });
+
+export const findByIdTenantSchema = Joi.object({
+  id: Joi.string().uuid().required().messages({
+    "string.empty": "ID is required",
+    "string.guid": "ID must be a valid UUID",
+    "any.required": "ID is required",
+  }),
+});
