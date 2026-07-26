@@ -17,6 +17,13 @@ export class TenantRepository implements ITenantRepository {
       });
     });
   }
+
+  async update(tenant: Tenant): Promise<void> {
+    await this.db("tenants")
+      .where("id", tenant.id)
+      .update(TenantMapper.toPersistence(tenant));
+  }
+
   async findById(id: string): Promise<Tenant | null> {
     const raw = await this.db("tenants")
       .join("tenant_api", "tenants.id", "tenant_api.tenant_id")
@@ -27,12 +34,14 @@ export class TenantRepository implements ITenantRepository {
         "tenants.email",
         "tenants.password",
         "tenants.created_at",
+        "tenants.deleted_at",
         "tenant_api.key as api_key",
       )
       .first();
     if (!raw) return null;
     return TenantMapper.toDomain(raw);
   }
+
   async list(page: number, limit: number): Promise<Tenant[]> {
     const raw = await this.db("tenants")
       .join("tenant_api", "tenants.id", "tenant_api.tenant_id")
@@ -42,6 +51,7 @@ export class TenantRepository implements ITenantRepository {
         "tenants.email",
         "tenants.password",
         "tenants.created_at",
+        "tenants.deleted_at",
         "tenant_api.key as api_key",
       )
       .limit(limit);

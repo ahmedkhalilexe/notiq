@@ -1,7 +1,9 @@
+import { throws } from "assert";
 import type { DomainEvent } from "../../../shared/events";
 import { TenantEmailInvalidError } from "../errors/tenant-email-invalid.error";
 import { TenantNameInvalidError } from "../errors/tenant-name-invalid.error";
 import { TenantCreatedEvent } from "../events/tenant-created.event";
+import { TenantDeletedEvent } from "../events/tenant-deleted.event";
 import { ApiKey } from "../value-objetcs/api-key.vo";
 import { Password } from "../value-objetcs/password.vo";
 
@@ -14,6 +16,7 @@ export class Tenant {
     readonly password: Password,
     readonly apiKey: ApiKey,
     readonly createdAt: Date,
+    private _deletedAt: Date | null,
   ) {}
 
   static create({
@@ -47,12 +50,23 @@ export class Tenant {
       password,
       ApiKey.generate(),
       new Date(),
+      null,
     );
 
     tenant._events.push(new TenantCreatedEvent(tenant.id));
 
     return tenant;
   }
+
+  public delete(): void {
+    if (this.deletedAt != null) {
+      throw Error("tenant already deleted");
+    }
+
+    this._deletedAt = new Date();
+    this._events.push(new TenantDeletedEvent(this.id, this._deletedAt));
+  }
+
   static reconstitute(
     id: string,
     name: string,
@@ -60,12 +74,18 @@ export class Tenant {
     password: Password,
     apiKey: ApiKey,
     createdAt: Date,
+    deletedAt: Date | null,
   ): Tenant {
-    return new Tenant(id, name, email, password, apiKey, createdAt);
+    return new Tenant(id, name, email, password, apiKey, createdAt, deletedAt);
   }
   get events(): DomainEvent[] {
     return [...this._events];
   }
+
+  get deletedAt(): Date | null {
+    return this._deletedAt;
+  }
+
   public clearEvents() {
     this._events = [];
   }

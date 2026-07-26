@@ -9,6 +9,7 @@ interface TenantPersistence {
   password: string;
   api_key: string;
   created_at: Date;
+  deleted_at: Date | null;
 }
 
 export class TenantMapper {
@@ -22,6 +23,7 @@ export class TenantMapper {
       password,
       apiKey,
       new Date(raw.created_at),
+      raw.deleted_at ? new Date(raw.deleted_at) : null,
     );
   }
 
@@ -32,6 +34,7 @@ export class TenantMapper {
       email: tenant.email,
       password: tenant.password.value,
       created_at: tenant.createdAt,
+      deleted_at: tenant.deletedAt,
     };
   }
 }
