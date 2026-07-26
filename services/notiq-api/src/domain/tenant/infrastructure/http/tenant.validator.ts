@@ -48,3 +48,11 @@ export const findByIdTenantSchema = Joi.object({
     "any.required": "ID is required",
   }),
 });
+
+export const deleteTenantSchema = Joi.object({
+  id: Joi.string().uuid().required().messages({
+    "string.empty": "ID is required",
+    "string.guid": "ID must be a valid UUID",
+    "any.required": "ID is required",
+  }),
+});

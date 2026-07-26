@@ -7,6 +7,7 @@ import { createTenantRoutes } from "../../domain/tenant/infrastructure/http/tena
 import { db } from "../database/connection";
 import { FindByIdTenantUsecase } from "../../domain/tenant/application/use-cases/get-tenant.use-case";
 import { ListTenantUsecase } from "../../domain/tenant/application/use-cases/list-tenant.use-case";
+import { DeleteTenantUsecase } from "../../domain/tenant/application/use-cases/delete-tenant.use-case";
 export function createRoutes(): Router {
   const router = Router();
   const consoleEventDispatcher = new ConsoleEventDispatcher();
@@ -17,11 +18,9 @@ export function createRoutes(): Router {
     tenantRepository,
     consoleEventDispatcher,
   );
-  const findByIdTenantUsecase = new FindByIdTenantUsecase(
-    tenantRepository,
-    consoleEventDispatcher,
-  );
-  const listTenantUsecase = new ListTenantUsecase(
+  const findByIdTenantUsecase = new FindByIdTenantUsecase(tenantRepository);
+  const listTenantUsecase = new ListTenantUsecase(tenantRepository);
+  const deleteTenantUsecase = new DeleteTenantUsecase(
     tenantRepository,
     consoleEventDispatcher,
   );
@@ -29,6 +28,7 @@ export function createRoutes(): Router {
     createTenantUsecase,
     findByIdTenantUsecase,
     listTenantUsecase,
+    deleteTenantUsecase,
   );
   router.use("/tenants", createTenantRoutes(tenantController));
 

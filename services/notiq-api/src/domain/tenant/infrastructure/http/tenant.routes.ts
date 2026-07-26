@@ -11,13 +11,19 @@ export function createTenantRoutes(controller: TenantController): Router {
   );
 
   router.get(
+    "/",
+    asyncHandler((req, res) => controller.list(req, res)),
+  );
+
+  router.get(
     "/:id",
     asyncHandler((req, res) => controller.findById(req, res)),
   );
 
-  router.get(
-    "/",
-    asyncHandler((req, res) => controller.list(req, res)),
+  router.delete(
+    "/:id",
+    asyncHandler((req, res) => controller.delete(req, res)),
   );
+
   return router;
 }
