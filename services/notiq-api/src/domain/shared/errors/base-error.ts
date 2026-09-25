@@ -6,6 +6,6 @@ export abstract class AppError extends Error {
   public constructor(message: string) {
     super(message);
     Error.captureStackTrace(this, this.constructor);
-    Object.setPrototypeOf(this, AppError.prototype);
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
