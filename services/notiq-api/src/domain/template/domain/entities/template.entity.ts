@@ -1,5 +1,5 @@
 import type { DomainEvent } from "../../../shared/events";
-import { TemplateNameInvalidError } from "../errors/tempalte-name-invalid.error";
+import { TemplateNameInvalidError } from "../errors/template-name-invalid.error";
 import { TemplateSubjectInvalidError } from "../errors/template-subject-invalid.error";
 import { TemplateCreatedEvent } from "../events/template-created.event";
 import { TemplateDeletedEvent } from "../events/template-deleted.event";
@@ -7,7 +7,7 @@ import { TemplateUpdatedEvent } from "../events/template-updated.event";
 import type { TemplateChannel } from "../value-objects/template-channel.vo";
 import type { TemplateBody } from "../value-objects/template-body.vo";
 import type { TemplateVariable } from "../value-objects/template-variable.vo";
-import { TemplateVariableExistsError } from "../errors/template-variable-duplicate";
+import { TemplateVariableExistsError } from "../errors/template-variable-duplicate.error";
 
 export class Template {
   private _events: DomainEvent[] = [];

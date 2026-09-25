@@ -5,6 +5,7 @@ import { TenantMapper } from "../mappers/tenant.mapper";
 
 export class TenantRepository implements ITenantRepository {
   public constructor(private readonly db: DbConnection) {}
+
   async save(tenant: Tenant): Promise<void> {
     await this.db.transaction(async (trx) => {
       await trx("tenants").insert(TenantMapper.toPersistence(tenant));
@@ -28,6 +29,7 @@ export class TenantRepository implements ITenantRepository {
     const raw = await this.db("tenants")
       .join("tenant_api", "tenants.id", "tenant_api.tenant_id")
       .where("tenants.id", id)
+      .whereNull("tenants.deleted_at")
       .select(
         "tenants.id",
         "tenants.name",
@@ -38,13 +40,16 @@ export class TenantRepository implements ITenantRepository {
         "tenant_api.key as api_key",
       )
       .first();
+
     if (!raw) return null;
     return TenantMapper.toDomain(raw);
   }
 
-  async list(page: number, limit: number): Promise<Tenant[]> {
+  async findByEmail(email: string): Promise<Tenant | null> {
     const raw = await this.db("tenants")
       .join("tenant_api", "tenants.id", "tenant_api.tenant_id")
+      .where("tenants.email", email.toLowerCase().trim())
+      .whereNull("tenants.deleted_at")
       .select(
         "tenants.id",
         "tenants.name",
@@ -54,12 +59,31 @@ export class TenantRepository implements ITenantRepository {
         "tenants.deleted_at",
         "tenant_api.key as api_key",
       )
+      .first();
+
+    if (!raw) return null;
+    return TenantMapper.toDomain(raw);
+  }
+
+  async list(page: number, limit: number): Promise<Tenant[]> {
+    const offset = Math.max(0, (page - 1) * limit);
+
+    const raw = await this.db("tenants")
+      .join("tenant_api", "tenants.id", "tenant_api.tenant_id")
+      .whereNull("tenants.deleted_at")
+      .select(
+        "tenants.id",
+        "tenants.name",
+        "tenants.email",
+        "tenants.password",
+        "tenants.created_at",
+        "tenants.deleted_at",
+        "tenant_api.key as api_key",
+      )
+      .orderBy("tenants.created_at", "desc")
+      .offset(offset)
       .limit(limit);
 
-    const tenants: Tenant[] = raw.map((tenantRaw) =>
-      TenantMapper.toDomain(tenantRaw),
-    );
-
-    return tenants;
+    return raw.map((tenantRaw) => TenantMapper.toDomain(tenantRaw));
   }
 }
