@@ -1,5 +1,7 @@
 import Joi from "joi";
 
+const allowedChannels = ["email", "sms", "in_app", "in-app"];
+
 export const createTemplateSchema = Joi.object({
   name: Joi.string().trim().min(2).max(100).required().messages({
     "string.min": "Template name must be at least 2 characters",
@@ -10,10 +12,10 @@ export const createTemplateSchema = Joi.object({
 
   channel: Joi.string()
     .trim()
-    .valid("email", "sms", "in-app")
+    .valid(...allowedChannels)
     .required()
     .messages({
-      "any.only": "Channel must be one of: email, sms, in-app",
+      "any.only": "Channel must be one of: email, sms, in_app, in-app",
       "string.empty": "Channel is required",
       "any.required": "Channel is required",
     }),
@@ -58,10 +60,10 @@ export const updateTemplateSchema = Joi.object({
 
   channel: Joi.string()
     .trim()
-    .valid("email", "sms", "in-app")
+    .valid(...allowedChannels)
     .optional()
     .messages({
-      "any.only": "Channel must be one of: email, sms, in-app",
+      "any.only": "Channel must be one of: email, sms, in_app, in-app",
       "string.empty": "Channel cannot be empty",
     }),
 
@@ -117,5 +119,8 @@ export const deleteTemplateSchema = Joi.object({
 export const listTemplateSchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
-  channel: Joi.string().trim().valid("email", "sms", "in-app").optional(),
+  channel: Joi.string()
+    .trim()
+    .valid(...allowedChannels)
+    .optional(),
 });

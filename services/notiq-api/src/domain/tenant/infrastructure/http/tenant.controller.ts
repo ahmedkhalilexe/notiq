@@ -10,6 +10,7 @@ import { validate } from "../../../shared/validation/validate";
 import type { FindByIdTenantUsecase } from "../../application/use-cases/get-tenant.use-case";
 import type { ListTenantUsecase } from "../../application/use-cases/list-tenant.use-case";
 import type { DeleteTenantUsecase } from "../../application/use-cases/delete-tenant.use-case";
+import { TenantMapper } from "../mappers/tenant.mapper";
 
 export class TenantController {
   public constructor(
@@ -18,6 +19,7 @@ export class TenantController {
     private readonly listTenantUsecase: ListTenantUsecase,
     private readonly deleteTenantUsecase: DeleteTenantUsecase,
   ) {}
+
   public async create(req: Request, res: Response): Promise<void> {
     const value = validate(createTenantSchema, req.body);
 
@@ -26,14 +28,8 @@ export class TenantController {
     );
 
     res.status(201).json({
-      tenant: {
-        id: tenant.id,
-        name: tenant.name,
-        email: tenant.email,
-        api_key: tenant.apiKey.value,
-        created_at: tenant.createdAt,
-      },
-      message: "tenant created succesfully",
+      tenant: TenantMapper.toResponse(tenant),
+      message: "tenant created successfully",
     });
   }
 
@@ -50,15 +46,9 @@ export class TenantController {
 
     const tenant = await this.findByIdTenantUsecase.execute(value);
 
-    res.status(201).json({
-      tenant: {
-        id: tenant.id,
-        name: tenant.name,
-        email: tenant.email,
-        api_key: tenant.apiKey.value,
-        created_at: tenant.createdAt,
-      },
-      message: "tenant retreived succesfully",
+    res.status(200).json({
+      tenant: TenantMapper.toResponse(tenant),
+      message: "tenant retrieved successfully",
     });
   }
 
@@ -68,18 +58,9 @@ export class TenantController {
 
     const tenants = await this.listTenantUsecase.execute({ page, limit });
 
-    res.status(201).json({
-      tenants: tenants.map((tenant) => {
-        return {
-          id: tenant.id,
-          name: tenant.name,
-          email: tenant.email,
-          api_key: tenant.apiKey.value,
-          created_at: tenant.createdAt,
-          deletedAt: tenant.deletedAt,
-        };
-      }),
-      message: "tenants retreived succesfully",
+    res.status(200).json({
+      tenants: tenants.map((tenant) => TenantMapper.toResponse(tenant)),
+      message: "tenants retrieved successfully",
     });
   }
 }
