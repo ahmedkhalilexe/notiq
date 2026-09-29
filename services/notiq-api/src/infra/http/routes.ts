@@ -18,6 +18,16 @@ import { DeleteTemplateUsecase } from "../../domain/template/application/use-cas
 import { TemplateController } from "../../domain/template/infrastructure/http/template.controller";
 import { createTemplateRoutes } from "../../domain/template/infrastructure/http/template.routes";
 
+import { SubscriberRepository } from "../../domain/subscriber/infrastructure/persistence/subscriber.repository";
+import { CreateSubscriberUseCase } from "../../domain/subscriber/application/use-cases/create-subscriber.use-case";
+import { GetSubscriberUseCase } from "../../domain/subscriber/application/use-cases/get-subscriber.use-case";
+import { UpdateSubscriberUseCase } from "../../domain/subscriber/application/use-cases/update-subscriber.use-case";
+import { UpdateSubscriberPreferenceUseCase } from "../../domain/subscriber/application/use-cases/update-subscriber-preference.use-case";
+import { DeleteSubscriberUseCase } from "../../domain/subscriber/application/use-cases/delete-subscriber.use-case";
+import { ListSubscribersUseCase } from "../../domain/subscriber/application/use-cases/list-subscribers.use-case";
+import { SubscriberController } from "../../domain/subscriber/infrastructure/http/subscriber.controller";
+import { createSubscriberRoutes } from "../../domain/subscriber/infrastructure/http/subscriber.routes";
+
 export function createRoutes(): Router {
   const router = Router();
   const consoleEventDispatcher = new ConsoleEventDispatcher();
@@ -69,6 +79,39 @@ export function createRoutes(): Router {
     deleteTemplateUsecase,
   );
   router.use("/templates", createTemplateRoutes(templateController));
+
+  // --- Subscriber domain ---
+  const subscriberRepository = new SubscriberRepository(db);
+  const createSubscriberUseCase = new CreateSubscriberUseCase(
+    subscriberRepository,
+    consoleEventDispatcher,
+  );
+  const getSubscriberUseCase = new GetSubscriberUseCase(subscriberRepository);
+  const updateSubscriberUseCase = new UpdateSubscriberUseCase(
+    subscriberRepository,
+    consoleEventDispatcher,
+  );
+  const updateSubscriberPreferenceUseCase =
+    new UpdateSubscriberPreferenceUseCase(
+      subscriberRepository,
+      consoleEventDispatcher,
+    );
+  const deleteSubscriberUseCase = new DeleteSubscriberUseCase(
+    subscriberRepository,
+    consoleEventDispatcher,
+  );
+  const listSubscribersUseCase = new ListSubscribersUseCase(
+    subscriberRepository,
+  );
+  const subscriberController = new SubscriberController(
+    createSubscriberUseCase,
+    getSubscriberUseCase,
+    updateSubscriberUseCase,
+    updateSubscriberPreferenceUseCase,
+    deleteSubscriberUseCase,
+    listSubscribersUseCase,
+  );
+  router.use("/subscribers", createSubscriberRoutes(subscriberController));
 
   return router;
 }
