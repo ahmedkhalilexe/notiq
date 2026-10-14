@@ -28,9 +28,11 @@ COPY . .
 
 # copy production dependencies and source code into final image
 FROM base AS release
+ENV NODE_ENV=production
 COPY --from=install /temp/prod/node_modules node_modules
-COPY --from=prerelease /usr/src/app/main.ts .
+COPY --from=prerelease /usr/src/app/src ./src
 COPY --from=prerelease /usr/src/app/package.json .
+COPY --from=prerelease /usr/src/app/tsconfig.json .
 
 # run the app
 USER bun

@@ -2,7 +2,7 @@ import type { Knex } from "knex";
 
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable("tenant_api", (table) => {
-    table.uuid("key").primary();
+    table.string("key").primary();
 
     table
       .uuid("tenant_id")

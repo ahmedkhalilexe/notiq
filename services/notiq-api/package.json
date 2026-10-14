@@ -8,16 +8,19 @@
     "start": "bun src/main.ts"
   },
   "devDependencies": {
-    "@types/bun": "latest",
-    "pg": "^8.22.0"
+    "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "amqplib": "^2.0.1",
+    "bcrypt": "^6.0.0",
     "express": "^5.2.1",
-    "knex": "^3.2.10"
+    "joi": "^18.2.3",
+    "knex": "^3.2.10",
+    "pg": "^8.22.0"
   }
 }
