@@ -1,9 +1,16 @@
 import { Router } from "express";
 import { TenantController } from "../../domain/tenant/infrastructure/http/tenant.controller";
+import { ApiKeyController } from "../../domain/tenant/infrastructure/http/api-key.controller";
 import { CreateTenantUseCase } from "../../domain/tenant/application/use-cases/create-tenant.use-case";
+import { CreateApiKeyUseCase } from "../../domain/tenant/application/use-cases/create-api-key.use-case";
+import { RevokeApiKeyUseCase } from "../../domain/tenant/application/use-cases/revoke-api-key.use-case";
+import { ListApiKeysUseCase } from "../../domain/tenant/application/use-cases/list-api-keys.use-case";
+import { GetTenantByApiKeyUseCase } from "../../domain/tenant/application/use-cases/get-tenant-by-api-key.use-case";
 import { TenantRepository } from "../../domain/tenant/infrastructure/persistence/tenant.repository";
+import { ApiKeyRepository } from "../../domain/tenant/infrastructure/persistence/api-key.repository";
 import { ConsoleEventDispatcher } from "../shared/console-event-dispatcher";
 import { createTenantRoutes } from "../../domain/tenant/infrastructure/http/tenant.routes";
+import { createApiValidator } from "./middleware/api-validator";
 import { db } from "../database/connection";
 import { FindByIdTenantUsecase } from "../../domain/tenant/application/use-cases/get-tenant.use-case";
 import { ListTenantUsecase } from "../../domain/tenant/application/use-cases/list-tenant.use-case";
@@ -34,6 +41,8 @@ export function createRoutes(): Router {
 
   // --- Tenant domain ---
   const tenantRepository = new TenantRepository(db);
+  const apiKeyRepository = new ApiKeyRepository(db);
+
   const createTenantUsecase = new CreateTenantUseCase(
     tenantRepository,
     consoleEventDispatcher,
@@ -50,7 +59,36 @@ export function createRoutes(): Router {
     listTenantUsecase,
     deleteTenantUsecase,
   );
-  router.use("/tenants", createTenantRoutes(tenantController));
+
+  const createApiKeyUseCase = new CreateApiKeyUseCase(
+    tenantRepository,
+    apiKeyRepository,
+    consoleEventDispatcher,
+  );
+  const revokeApiKeyUseCase = new RevokeApiKeyUseCase(
+    apiKeyRepository,
+    consoleEventDispatcher,
+  );
+  const listApiKeysUseCase = new ListApiKeysUseCase(
+    tenantRepository,
+    apiKeyRepository,
+  );
+  const apiKeyController = new ApiKeyController(
+    createApiKeyUseCase,
+    revokeApiKeyUseCase,
+    listApiKeysUseCase,
+  );
+
+  router.use(
+    "/tenants",
+    createTenantRoutes(tenantController, apiKeyController),
+  );
+
+  const getTenantByApiKeyUseCase = new GetTenantByApiKeyUseCase(
+    tenantRepository,
+    apiKeyRepository,
+  );
+  const apiValidator = createApiValidator(getTenantByApiKeyUseCase);
 
   // --- Template domain ---
   const templateRepository = new TemplateRepository(db);
