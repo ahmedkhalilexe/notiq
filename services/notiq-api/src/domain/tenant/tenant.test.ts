@@ -54,6 +54,10 @@ class MockTenantRepository implements ITenantRepository {
     const offset = Math.max(0, (page - 1) * limit);
     return active.slice(offset, offset + limit);
   }
+
+  async findByApiKey(_apiKey: string): Promise<Tenant | null> {
+    return null;
+  }
 }
 
 class MockEventDispatcher implements IEventDispatcher {
@@ -65,7 +69,7 @@ class MockEventDispatcher implements IEventDispatcher {
 }
 
 describe("Tenant Domain Entity", () => {
-  it("should create a valid tenant and generate API key and TenantCreatedEvent", () => {
+  it("should create a valid tenant and emit TenantCreatedEvent", () => {
     const password = Password.create("hashed_pw_123");
     const tenant = Tenant.create({
       name: "Acme Corp",
@@ -76,7 +80,6 @@ describe("Tenant Domain Entity", () => {
     expect(tenant.id).toBeDefined();
     expect(tenant.name).toBe("Acme Corp");
     expect(tenant.email).toBe("admin@acme.com");
-    expect(tenant.apiKey.value.startsWith("ntk_")).toBe(true);
     expect(tenant.deletedAt).toBeNull();
     expect(tenant.events.length).toBe(1);
   });
@@ -121,7 +124,6 @@ describe("Tenant Domain Entity", () => {
   });
 
   it("should reconstitute an existing tenant", () => {
-    const apiKey = ApiKey.create("ntk_12345");
     const password = Password.create("hashed_password");
     const now = new Date();
 
@@ -130,13 +132,11 @@ describe("Tenant Domain Entity", () => {
       "Reconstituted Tenant",
       "reconstituted@acme.com",
       password,
-      apiKey,
       now,
       null,
     );
 
     expect(tenant.id).toBe("uuid-123");
-    expect(tenant.apiKey.value).toBe("ntk_12345");
     expect(tenant.createdAt).toEqual(now);
   });
 });
@@ -256,17 +256,12 @@ describe("TenantMapper & Validator", () => {
     expect(persistence.name).toBe("Mapper Test");
     expect(persistence.email).toBe("mapper@example.com");
 
-    const domain = TenantMapper.toDomain({
-      ...persistence,
-      api_key: tenant.apiKey.value,
-    });
+    const domain = TenantMapper.toDomain(persistence);
     expect(domain.name).toBe("Mapper Test");
-    expect(domain.apiKey.value).toBe(tenant.apiKey.value);
 
     const response = TenantMapper.toResponse(domain);
     expect(response.id).toBe(tenant.id);
     expect(response.name).toBe("Mapper Test");
-    expect(response.api_key).toBe(tenant.apiKey.value);
   });
 
   it("should validate createTenantSchema and findByIdTenantSchema", () => {

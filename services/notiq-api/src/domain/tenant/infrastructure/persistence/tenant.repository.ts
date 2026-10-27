@@ -9,13 +9,6 @@ export class TenantRepository implements ITenantRepository {
   async save(tenant: Tenant): Promise<void> {
     await this.db.transaction(async (trx) => {
       await trx("tenants").insert(TenantMapper.toPersistence(tenant));
-
-      await trx("tenant_api").insert({
-        key: tenant.apiKey.value,
-        tenant_id: tenant.id,
-        created_at: tenant.createdAt,
-        updated_at: tenant.createdAt,
-      });
     });
   }
 
@@ -27,7 +20,6 @@ export class TenantRepository implements ITenantRepository {
 
   async findById(id: string): Promise<Tenant | null> {
     const raw = await this.db("tenants")
-      .join("tenant_api", "tenants.id", "tenant_api.tenant_id")
       .where("tenants.id", id)
       .whereNull("tenants.deleted_at")
       .select(
@@ -37,7 +29,6 @@ export class TenantRepository implements ITenantRepository {
         "tenants.password",
         "tenants.created_at",
         "tenants.deleted_at",
-        "tenant_api.key as api_key",
       )
       .first();
 
@@ -47,7 +38,6 @@ export class TenantRepository implements ITenantRepository {
 
   async findByEmail(email: string): Promise<Tenant | null> {
     const raw = await this.db("tenants")
-      .join("tenant_api", "tenants.id", "tenant_api.tenant_id")
       .where("tenants.email", email.toLowerCase().trim())
       .whereNull("tenants.deleted_at")
       .select(
@@ -57,7 +47,6 @@ export class TenantRepository implements ITenantRepository {
         "tenants.password",
         "tenants.created_at",
         "tenants.deleted_at",
-        "tenant_api.key as api_key",
       )
       .first();
 
@@ -69,7 +58,6 @@ export class TenantRepository implements ITenantRepository {
     const offset = Math.max(0, (page - 1) * limit);
 
     const raw = await this.db("tenants")
-      .join("tenant_api", "tenants.id", "tenant_api.tenant_id")
       .whereNull("tenants.deleted_at")
       .select(
         "tenants.id",
@@ -78,12 +66,31 @@ export class TenantRepository implements ITenantRepository {
         "tenants.password",
         "tenants.created_at",
         "tenants.deleted_at",
-        "tenant_api.key as api_key",
       )
       .orderBy("tenants.created_at", "desc")
       .offset(offset)
       .limit(limit);
 
     return raw.map((tenantRaw) => TenantMapper.toDomain(tenantRaw));
+  }
+
+  async findByApiKey(apiKeyHash: string): Promise<Tenant | null> {
+    const raw = await this.db("tenant_api")
+      .join("tenants", "tenant_api.tenant_id", "tenants.id")
+      .where("tenant_api.key", apiKeyHash)
+      .whereNull("tenant_api.revoked_at")
+      .whereNull("tenants.deleted_at")
+      .select(
+        "tenants.id",
+        "tenants.name",
+        "tenants.email",
+        "tenants.password",
+        "tenants.created_at",
+        "tenants.deleted_at",
+      )
+      .first();
+
+    if (!raw) return null;
+    return TenantMapper.toDomain(raw);
   }
 }

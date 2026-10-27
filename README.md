@@ -169,7 +169,7 @@ The database schema enforces multi-tenant data isolation, template versioning, s
 ### Table Definitions
 
 1. **`tenants`**: Registered system users/organizations (supports soft deletes via `deleted_at`).
-2. **`tenant_api`**: API keys mapped to tenants for authenticating programmatic requests.
+2. **`tenant_api`**: Multi-key management per tenant. Stores hashed API keys (`key`), unique `id` (UUID), `name`, `created_at`, and `revoked_at` for secure lifecycle management (create, revoke, verify).
 3. **`subscribers`**: End-users who receive notifications, scoped per tenant.
 4. **`subscriber_channels`**: Channel preferences per subscriber (`email`, `in_app`, `sms`) with target addresses/handles.
 5. **`templates`**: Notification templates created by tenants with channel assignment (`email`, `in_app`, `sms`).
@@ -187,6 +187,13 @@ The database schema enforces multi-tenant data isolation, template versioning, s
 * `GET /v1/api/tenants` - List all tenants (paginated).
 * `GET /v1/api/tenants/:id` - Fetch tenant details.
 * `DELETE /v1/api/tenants/:id` - Soft delete tenant account.
+
+### 🔐 API Key Management & Middleware
+API keys are decoupled from tenant creation and support a complete lifecycle (**Create ➔ List ➔ Revoke ➔ Verify**):
+* `POST /v1/api/tenants/:id/api-keys` - Generate a new named API key (`{ "name": "Production" }`). Plaintext key (`ntk_<32 hex chars>`) is returned **only once**.
+* `GET /v1/api/tenants/:id/api-keys` - List all API keys for a tenant (`id`, `name`, `status`, `created_at`, `revoked_at`). Plaintext keys and hashes are never exposed.
+* `DELETE /v1/api/tenants/:id/api-keys/:keyId` - Revoke an API key.
+* **`apiValidator` Middleware**: Authenticates programmatic requests via the `X-API-KEY` (or `x-api-key`) header against SHA-256 hashes in `tenant_api`, rejects invalid/revoked keys with `401 Unauthorized`, and injects `req.tenant` and `req.tenantId` onto the request.
 
 ### 👤 Subscribers
 * `POST /v1/api/subscribers` - Create subscriber with channel preferences (e.g. `{ email: "user@example.com", in_app: true }`).

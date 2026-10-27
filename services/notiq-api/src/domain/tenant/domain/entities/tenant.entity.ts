@@ -3,7 +3,6 @@ import { TenantEmailInvalidError } from "../errors/tenant-email-invalid.error";
 import { TenantNameInvalidError } from "../errors/tenant-name-invalid.error";
 import { TenantCreatedEvent } from "../events/tenant-created.event";
 import { TenantDeletedEvent } from "../events/tenant-deleted.event";
-import { ApiKey } from "../value-objects/api-key.vo";
 import { Password } from "../value-objects/password.vo";
 
 export class Tenant {
@@ -13,7 +12,6 @@ export class Tenant {
     readonly name: string,
     readonly email: string,
     readonly password: Password,
-    readonly apiKey: ApiKey,
     readonly createdAt: Date,
     private _deletedAt: Date | null,
   ) {}
@@ -42,15 +40,7 @@ export class Tenant {
 
     const id = crypto.randomUUID();
 
-    const tenant = new Tenant(
-      id,
-      name,
-      email,
-      password,
-      ApiKey.generate(),
-      new Date(),
-      null,
-    );
+    const tenant = new Tenant(id, name, email, password, new Date(), null);
 
     tenant._events.push(new TenantCreatedEvent(tenant.id));
 
@@ -71,11 +61,10 @@ export class Tenant {
     name: string,
     email: string,
     password: Password,
-    apiKey: ApiKey,
     createdAt: Date,
     deletedAt: Date | null,
   ): Tenant {
-    return new Tenant(id, name, email, password, apiKey, createdAt, deletedAt);
+    return new Tenant(id, name, email, password, createdAt, deletedAt);
   }
 
   get events(): DomainEvent[] {

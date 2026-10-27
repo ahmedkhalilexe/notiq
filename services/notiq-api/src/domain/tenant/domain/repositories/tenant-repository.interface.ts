@@ -6,4 +6,5 @@ export interface ITenantRepository {
   findById(id: string): Promise<Tenant | null>;
   findByEmail(email: string): Promise<Tenant | null>;
   list(page: number, limit: number): Promise<Tenant[]>;
+  findByApiKey(apiKey: string): Promise<Tenant | null>;
 }
