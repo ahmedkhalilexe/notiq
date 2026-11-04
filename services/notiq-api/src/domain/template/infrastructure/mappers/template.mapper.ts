@@ -5,6 +5,7 @@ import { TemplateVariable } from "../../domain/value-objects/template-variable.v
 
 export interface TemplatePersistence {
   id: string;
+  tenant_id: string;
   name: string;
   channel: string;
   subject: string;
@@ -34,6 +35,7 @@ export class TemplateMapper {
     });
     return Template.reconstitute(
       raw.id,
+      raw.tenant_id,
       raw.name,
       templateChannel,
       raw.subject,
@@ -47,6 +49,7 @@ export class TemplateMapper {
   static toPersistence(template: Template) {
     return {
       id: template.id,
+      tenant_id: template.tenantId,
       name: template.name,
       channel: template.channel.value,
       subject: template.subject,

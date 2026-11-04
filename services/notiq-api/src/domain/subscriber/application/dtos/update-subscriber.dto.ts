@@ -1,6 +1,6 @@
 export interface UpdateSubscriberDTO {
   id: string;
-  tenantId?: string;
+  tenantId: string;
   externalId?: string | null;
   name?: string | null;
   email?: string | null;

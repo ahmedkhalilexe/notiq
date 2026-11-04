@@ -1,7 +1,7 @@
 import type { Subscriber } from "../entities/subscriber.entity";
 
 export interface ListSubscribersFilter {
-  tenantId?: string;
+  tenantId: string;
   page: number;
   limit: number;
   channel?: string;
@@ -11,7 +11,7 @@ export interface ListSubscribersFilter {
 export interface ISubscriberRepository {
   save(subscriber: Subscriber): Promise<void>;
   update(subscriber: Subscriber): Promise<void>;
-  findById(id: string, tenantId?: string): Promise<Subscriber | null>;
+  findById(id: string, tenantId: string): Promise<Subscriber | null>;
   findByEmail(email: string, tenantId: string): Promise<Subscriber | null>;
   findByExternalId(externalId: string, tenantId: string): Promise<Subscriber | null>;
   list(filter: ListSubscribersFilter): Promise<Subscriber[]>;

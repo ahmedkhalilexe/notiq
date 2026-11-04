@@ -12,6 +12,7 @@ import {
   deleteTemplateSchema,
   listTemplateSchema,
 } from "./template.validator";
+import { getTenantId } from "../../../../infra/http/middleware/jwt-auth";
 import { TemplateMapper } from "../mappers/template.mapper";
 
 export class TemplateController {
@@ -25,7 +26,10 @@ export class TemplateController {
 
   public async create(req: Request, res: Response): Promise<void> {
     const value = validate(createTemplateSchema, req.body);
-    const template = await this.createTemplateUsecase.execute(value);
+    const template = await this.createTemplateUsecase.execute({
+      ...value,
+      tenantId: getTenantId(req),
+    });
 
     res.status(201).json({
       template: TemplateMapper.toResponse(template),
@@ -39,6 +43,7 @@ export class TemplateController {
 
     const template = await this.updateTemplateUsecase.execute({
       id: params.id,
+      tenantId: getTenantId(req),
       ...body,
     });
 
@@ -50,7 +55,10 @@ export class TemplateController {
 
   public async findById(req: Request, res: Response): Promise<void> {
     const params = validate(findByIdTemplateSchema, req.params);
-    const template = await this.getTemplateUsecase.execute({ id: params.id });
+    const template = await this.getTemplateUsecase.execute({
+      id: params.id,
+      tenantId: getTenantId(req),
+    });
 
     res.status(200).json({
       template: TemplateMapper.toResponse(template),
@@ -61,6 +69,7 @@ export class TemplateController {
   public async list(req: Request, res: Response): Promise<void> {
     const query = validate(listTemplateSchema, req.query);
     const templates = await this.listTemplateUsecase.execute({
+      tenantId: getTenantId(req),
       page: query.page,
       limit: query.limit,
       channel: query.channel,
@@ -74,7 +83,10 @@ export class TemplateController {
 
   public async delete(req: Request, res: Response): Promise<void> {
     const params = validate(deleteTemplateSchema, req.params);
-    await this.deleteTemplateUsecase.execute({ id: params.id });
+    await this.deleteTemplateUsecase.execute({
+      id: params.id,
+      tenantId: getTenantId(req),
+    });
 
     res.status(204).send();
   }

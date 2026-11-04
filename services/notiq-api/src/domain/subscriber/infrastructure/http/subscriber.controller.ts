@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { validate } from "../../../shared/validation/validate";
-import { ValidationError } from "../../../shared/errors/validation-error";
+import { getTenantId } from "../../../../infra/http/middleware/jwt-auth";
 import type { CreateSubscriberUseCase } from "../../application/use-cases/create-subscriber.use-case";
 import type { GetSubscriberUseCase } from "../../application/use-cases/get-subscriber.use-case";
 import type { UpdateSubscriberUseCase } from "../../application/use-cases/update-subscriber.use-case";
@@ -26,26 +26,8 @@ export class SubscriberController {
     private readonly listSubscribersUseCase: ListSubscribersUseCase,
   ) {}
 
-  private getTenantId(req: Request, requireTenant = true): string | undefined {
-    const headerTenant = req.headers["x-tenant-id"] as string | undefined;
-    const bodyTenant = req.body?.tenant_id || req.body?.tenantId;
-    const queryTenant = (req.query?.tenant_id || req.query?.tenantId) as
-      | string
-      | undefined;
-
-    const tenantId = headerTenant || bodyTenant || queryTenant;
-
-    if (requireTenant && !tenantId) {
-      throw new ValidationError(
-        "tenant_id is required via x-tenant-id header or request body/query",
-      );
-    }
-
-    return tenantId;
-  }
-
   public async create(req: Request, res: Response): Promise<void> {
-    const tenantId = this.getTenantId(req, true)!;
+    const tenantId = getTenantId(req);
     const body = validate(createSubscriberSchema, req.body);
 
     const subscriber = await this.createSubscriberUseCase.execute({
@@ -65,7 +47,7 @@ export class SubscriberController {
 
   public async findById(req: Request, res: Response): Promise<void> {
     const params = validate(findSubscriberParamSchema, req.params);
-    const tenantId = this.getTenantId(req, false);
+    const tenantId = getTenantId(req);
 
     const subscriber = await this.getSubscriberUseCase.execute({
       id: params.id,
@@ -81,7 +63,7 @@ export class SubscriberController {
   public async update(req: Request, res: Response): Promise<void> {
     const params = validate(findSubscriberParamSchema, req.params);
     const body = validate(updateSubscriberSchema, req.body);
-    const tenantId = this.getTenantId(req, false);
+    const tenantId = getTenantId(req);
 
     const subscriber = await this.updateSubscriberUseCase.execute({
       id: params.id,
@@ -102,7 +84,7 @@ export class SubscriberController {
   public async updatePreference(req: Request, res: Response): Promise<void> {
     const params = validate(findSubscriberParamSchema, req.params);
     const body = validate(updatePreferenceSchema, req.body);
-    const tenantId = this.getTenantId(req, false);
+    const tenantId = getTenantId(req);
 
     const subscriber = await this.updateSubscriberPreferenceUseCase.execute({
       id: params.id,
@@ -120,7 +102,7 @@ export class SubscriberController {
 
   public async list(req: Request, res: Response): Promise<void> {
     const query = validate(listSubscribersQuerySchema, req.query);
-    const tenantId = this.getTenantId(req, false);
+    const tenantId = getTenantId(req);
 
     const subscribers = await this.listSubscribersUseCase.execute({
       tenantId,
@@ -140,7 +122,7 @@ export class SubscriberController {
 
   public async delete(req: Request, res: Response): Promise<void> {
     const params = validate(findSubscriberParamSchema, req.params);
-    const tenantId = this.getTenantId(req, false);
+    const tenantId = getTenantId(req);
 
     await this.deleteSubscriberUseCase.execute({
       id: params.id,

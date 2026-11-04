@@ -1,50 +1,30 @@
-import { Router } from "express";
+import { Router, type RequestHandler } from "express";
 import type { TenantController } from "./tenant.controller";
-import type { ApiKeyController } from "./api-key.controller";
 import { asyncHandler } from "../../../../infra/http/middleware/async-handler";
 
 export function createTenantRoutes(
   controller: TenantController,
-  apiKeyController?: ApiKeyController,
+  authenticate: RequestHandler,
 ): Router {
   const router = Router();
 
+  // Public until signup exists.
   router.post(
     "/",
     asyncHandler((req, res) => controller.create(req, res)),
   );
 
   router.get(
-    "/",
-    asyncHandler((req, res) => controller.list(req, res)),
-  );
-
-  router.get(
-    "/:id",
-    asyncHandler((req, res) => controller.findById(req, res)),
+    "/me",
+    authenticate,
+    asyncHandler((req, res) => controller.me(req, res)),
   );
 
   router.delete(
-    "/:id",
-    asyncHandler((req, res) => controller.delete(req, res)),
+    "/me",
+    authenticate,
+    asyncHandler((req, res) => controller.deleteMe(req, res)),
   );
-
-  if (apiKeyController) {
-    router.post(
-      "/:id/api-keys",
-      asyncHandler((req, res) => apiKeyController.create(req, res)),
-    );
-
-    router.get(
-      "/:id/api-keys",
-      asyncHandler((req, res) => apiKeyController.list(req, res)),
-    );
-
-    router.delete(
-      "/:id/api-keys/:keyId",
-      asyncHandler((req, res) => apiKeyController.revoke(req, res)),
-    );
-  }
 
   return router;
 }

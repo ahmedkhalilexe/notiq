@@ -29,7 +29,7 @@ export class TemplateRepository implements ITemplateRepository {
   async update(template: Template): Promise<void> {
     await this.db.transaction(async (trx) => {
       await trx("templates")
-        .where("id", template.id)
+        .where({ id: template.id, tenant_id: template.tenantId })
         .update(TemplateMapper.toPersistence(template));
 
       await trx("template_variables")
@@ -53,9 +53,9 @@ export class TemplateRepository implements ITemplateRepository {
     });
   }
 
-  async findById(id: string): Promise<Template | null> {
+  async findById(id: string, tenantId: string): Promise<Template | null> {
     const rawTemplate = await this.db("templates")
-      .where("id", id)
+      .where({ id, tenant_id: tenantId })
       .whereNull("deleted_at")
       .first();
 
@@ -72,6 +72,7 @@ export class TemplateRepository implements ITemplateRepository {
   }
 
   async list(
+    tenantId: string,
     page: number = 1,
     limit: number = 10,
     channel?: string,
@@ -79,6 +80,7 @@ export class TemplateRepository implements ITemplateRepository {
     const offset = Math.max(0, (page - 1) * limit);
 
     let query = this.db("templates")
+      .where("tenant_id", tenantId)
       .whereNull("deleted_at")
       .offset(offset)
       .limit(limit)

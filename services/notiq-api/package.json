@@ -8,7 +8,8 @@
     "start": "bun src/main.ts"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/jsonwebtoken": "^9.0.10"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -20,6 +21,7 @@
     "bcrypt": "^6.0.0",
     "express": "^5.2.1",
     "joi": "^18.2.3",
+    "jsonwebtoken": "^9.0.3",
     "knex": "^3.2.10",
     "pg": "^8.22.0"
   }

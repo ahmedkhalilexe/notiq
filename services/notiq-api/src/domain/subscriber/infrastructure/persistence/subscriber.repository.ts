@@ -62,14 +62,10 @@ export class SubscriberRepository implements ISubscriberRepository {
     });
   }
 
-  async findById(id: string, tenantId?: string): Promise<Subscriber | null> {
-    let query = this.db<SubscriberPersistenceRow>("subscribers")
-      .where("id", id)
+  async findById(id: string, tenantId: string): Promise<Subscriber | null> {
+    const query = this.db<SubscriberPersistenceRow>("subscribers")
+      .where({ id, tenant_id: tenantId })
       .whereNull("deleted_at");
-
-    if (tenantId) {
-      query = query.where("tenant_id", tenantId);
-    }
 
     const raw = await query.first();
     if (!raw) return null;
@@ -134,9 +130,7 @@ export class SubscriberRepository implements ISubscriberRepository {
       .limit(filter.limit)
       .orderBy("subscribers.created_at", "desc");
 
-    if (filter.tenantId) {
-      query = query.where("subscribers.tenant_id", filter.tenantId);
-    }
+    query = query.where("subscribers.tenant_id", filter.tenantId);
 
     let normalizedChannel = filter.channel?.toLowerCase().trim();
     if (normalizedChannel === "in-app") normalizedChannel = "in_app";
@@ -187,9 +181,7 @@ export class SubscriberRepository implements ISubscriberRepository {
   ): Promise<number> {
     let query = this.db("subscribers").whereNull("subscribers.deleted_at");
 
-    if (filter.tenantId) {
-      query = query.where("subscribers.tenant_id", filter.tenantId);
-    }
+    query = query.where("subscribers.tenant_id", filter.tenantId);
 
     let normalizedChannel = filter.channel?.toLowerCase().trim();
     if (normalizedChannel === "in-app") normalizedChannel = "in_app";

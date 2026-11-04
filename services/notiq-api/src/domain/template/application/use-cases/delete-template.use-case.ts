@@ -11,7 +11,7 @@ export class DeleteTemplateUsecase {
   ) {}
 
   public async execute(dto: DeleteTemplateDTO): Promise<Template> {
-    const template = await this.templateRepository.findById(dto.id);
+    const template = await this.templateRepository.findById(dto.id, dto.tenantId);
 
     if (!template) {
       throw new NotFoundError("Template doesn't exist");

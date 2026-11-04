@@ -14,6 +14,7 @@ export class Template {
 
   public constructor(
     readonly id: string,
+    readonly tenantId: string,
     private _name: string,
     private _channel: TemplateChannel,
     private _subject: string,
@@ -24,6 +25,7 @@ export class Template {
   ) {}
 
   public static create(
+    tenantId: string,
     name: string,
     channel: TemplateChannel,
     subject: string,
@@ -44,6 +46,7 @@ export class Template {
 
     const template = new Template(
       id,
+      tenantId,
       trimmedName,
       channel,
       trimmedSubject,
@@ -60,6 +63,7 @@ export class Template {
 
   public static reconstitute(
     id: string,
+    tenantId: string,
     name: string,
     channel: TemplateChannel,
     subject: string,
@@ -70,6 +74,7 @@ export class Template {
   ) {
     return new Template(
       id,
+      tenantId,
       name,
       channel,
       subject,

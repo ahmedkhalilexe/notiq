@@ -37,10 +37,10 @@ class MockSubscriberRepository implements ISubscriberRepository {
     this.subscribers.set(subscriber.id, subscriber);
   }
 
-  async findById(id: string, tenantId?: string): Promise<Subscriber | null> {
+  async findById(id: string, tenantId: string): Promise<Subscriber | null> {
     const s = this.subscribers.get(id);
     if (!s || s.deletedAt !== null) return null;
-    if (tenantId && s.tenantId !== tenantId) return null;
+    if (s.tenantId !== tenantId) return null;
     return s;
   }
 
@@ -275,7 +275,10 @@ describe("Subscriber Application Use Cases", () => {
     expect(found.id).toBe(created.id);
 
     expect(
-      getUseCase.execute({ id: "00000000-0000-0000-0000-000000000000" }),
+      getUseCase.execute({
+        id: "00000000-0000-0000-0000-000000000000",
+        tenantId: "tenant-1",
+      }),
     ).rejects.toThrow(SubscriberNotFoundError);
   });
 
@@ -292,6 +295,7 @@ describe("Subscriber Application Use Cases", () => {
 
     const updated = await prefUseCase.execute({
       id: created.id,
+      tenantId: "tenant-1",
       channel: "email",
       enabled: false,
     });
@@ -319,6 +323,7 @@ describe("Subscriber Application Use Cases", () => {
 
     await prefUseCase.execute({
       id: s1.id,
+      tenantId: "tenant-1",
       channel: "sms",
       enabled: false,
     });
@@ -358,9 +363,9 @@ describe("Subscriber Application Use Cases", () => {
       externalId: "del-me",
     });
 
-    await deleteUseCase.execute({ id: created.id });
+    await deleteUseCase.execute({ id: created.id, tenantId: "tenant-1" });
 
-    const found = await repo.findById(created.id);
+    const found = await repo.findById(created.id, "tenant-1");
     expect(found).toBeNull();
   });
 });
@@ -429,5 +434,32 @@ describe("SubscriberMapper & Validators", () => {
       enabled: false,
     });
     expect(validQuery).toBeUndefined();
+  });
+});
+
+describe("Subscriber tenant isolation", () => {
+  it("should not expose or modify subscribers of another tenant", async () => {
+    const repo = new MockSubscriberRepository();
+    const dispatcher = new MockEventDispatcher();
+    const created = await new CreateSubscriberUseCase(repo, dispatcher).execute({
+      tenantId: "tenant-1",
+      email: "iso@example.com",
+    });
+
+    expect(
+      new GetSubscriberUseCase(repo).execute({
+        id: created.id,
+        tenantId: "tenant-2",
+      }),
+    ).rejects.toThrow(SubscriberNotFoundError);
+
+    expect(
+      new DeleteSubscriberUseCase(repo, dispatcher).execute({
+        id: created.id,
+        tenantId: "tenant-2",
+      }),
+    ).rejects.toThrow(SubscriberNotFoundError);
+
+    expect(await repo.findById(created.id, "tenant-1")).not.toBeNull();
   });
 });

@@ -1,4 +1,5 @@
 export type CreateTemplateDTO = {
+  tenantId: string;
   name: string;
   channel: string;
   subject: string;

@@ -11,6 +11,7 @@ export class ListTemplateUsecase {
 
   public async execute(dto: ListTemplateDTO): Promise<Template[]> {
     const templates = await this.templateRepository.list(
+      dto.tenantId,
       dto.page,
       dto.limit,
       dto.channel,

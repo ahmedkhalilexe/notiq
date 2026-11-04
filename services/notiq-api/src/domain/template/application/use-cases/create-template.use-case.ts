@@ -29,6 +29,7 @@ export class CreateTemplateUsecase {
     }
 
     const template = Template.create(
+      dto.tenantId,
       dto.name,
       templateChannel,
       dto.subject,
