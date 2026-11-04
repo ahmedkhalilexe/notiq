@@ -5,15 +5,15 @@ import { CreateTenantUseCase } from "../../domain/tenant/application/use-cases/c
 import { CreateApiKeyUseCase } from "../../domain/tenant/application/use-cases/create-api-key.use-case";
 import { RevokeApiKeyUseCase } from "../../domain/tenant/application/use-cases/revoke-api-key.use-case";
 import { ListApiKeysUseCase } from "../../domain/tenant/application/use-cases/list-api-keys.use-case";
-import { GetTenantByApiKeyUseCase } from "../../domain/tenant/application/use-cases/get-tenant-by-api-key.use-case";
 import { TenantRepository } from "../../domain/tenant/infrastructure/persistence/tenant.repository";
 import { ApiKeyRepository } from "../../domain/tenant/infrastructure/persistence/api-key.repository";
 import { ConsoleEventDispatcher } from "../shared/console-event-dispatcher";
 import { createTenantRoutes } from "../../domain/tenant/infrastructure/http/tenant.routes";
-import { createApiValidator } from "./middleware/api-validator";
+import { createJwtAuth } from "./middleware/jwt-auth";
+import { TokenService } from "../auth/token.service";
+import { createApiKeyRoutes } from "../../domain/tenant/infrastructure/http/api-key.routes";
 import { db } from "../database/connection";
 import { FindByIdTenantUsecase } from "../../domain/tenant/application/use-cases/get-tenant.use-case";
-import { ListTenantUsecase } from "../../domain/tenant/application/use-cases/list-tenant.use-case";
 import { DeleteTenantUsecase } from "../../domain/tenant/application/use-cases/delete-tenant.use-case";
 
 import { TemplateRepository } from "../../domain/template/infrastructure/persistence/template.repository";
@@ -48,7 +48,6 @@ export function createRoutes(): Router {
     consoleEventDispatcher,
   );
   const findByIdTenantUsecase = new FindByIdTenantUsecase(tenantRepository);
-  const listTenantUsecase = new ListTenantUsecase(tenantRepository);
   const deleteTenantUsecase = new DeleteTenantUsecase(
     tenantRepository,
     consoleEventDispatcher,
@@ -56,7 +55,6 @@ export function createRoutes(): Router {
   const tenantController = new TenantController(
     createTenantUsecase,
     findByIdTenantUsecase,
-    listTenantUsecase,
     deleteTenantUsecase,
   );
 
@@ -79,16 +77,12 @@ export function createRoutes(): Router {
     listApiKeysUseCase,
   );
 
-  router.use(
-    "/tenants",
-    createTenantRoutes(tenantController, apiKeyController),
-  );
+  // JWT auth for management routes; the tenant is attached to req.tenant / req.tenantId.
+  const tokenService = TokenService.fromEnv();
+  const authenticate = createJwtAuth(tokenService, findByIdTenantUsecase);
 
-  const getTenantByApiKeyUseCase = new GetTenantByApiKeyUseCase(
-    tenantRepository,
-    apiKeyRepository,
-  );
-  const apiValidator = createApiValidator(getTenantByApiKeyUseCase);
+  router.use("/tenants", createTenantRoutes(tenantController, authenticate));
+  router.use("/api-keys", authenticate, createApiKeyRoutes(apiKeyController));
 
   // --- Template domain ---
   const templateRepository = new TemplateRepository(db);
@@ -116,7 +110,11 @@ export function createRoutes(): Router {
     listTemplateUsecase,
     deleteTemplateUsecase,
   );
-  router.use("/templates", createTemplateRoutes(templateController));
+  router.use(
+    "/templates",
+    authenticate,
+    createTemplateRoutes(templateController),
+  );
 
   // --- Subscriber domain ---
   const subscriberRepository = new SubscriberRepository(db);
@@ -149,7 +147,11 @@ export function createRoutes(): Router {
     deleteSubscriberUseCase,
     listSubscribersUseCase,
   );
-  router.use("/subscribers", createSubscriberRoutes(subscriberController));
+  router.use(
+    "/subscribers",
+    authenticate,
+    createSubscriberRoutes(subscriberController),
+  );
 
   return router;
 }

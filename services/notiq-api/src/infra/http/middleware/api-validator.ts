@@ -5,15 +5,6 @@ import { ApiKeyRevokedError } from "../../../domain/tenant/domain/errors/api-key
 import { NotFoundError } from "../../../domain/shared/errors/not-found-error";
 import type { Tenant } from "../../../domain/tenant/domain/entities/tenant.entity";
 
-declare global {
-  namespace Express {
-    interface Request {
-      tenant?: Tenant;
-      tenantId?: string;
-    }
-  }
-}
-
 export function createApiValidator(
   getTenantByApiKeyUseCase: GetTenantByApiKeyUseCase,
 ) {

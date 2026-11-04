@@ -15,8 +15,6 @@ import type { DomainEvent } from "../shared/events";
 import { TenantMapper } from "./infrastructure/mappers/tenant.mapper";
 import {
   createTenantSchema,
-  findByIdTenantSchema,
-  deleteTenantSchema,
 } from "./infrastructure/http/tenant.validator";
 import { NotFoundError } from "../shared/errors/not-found-error";
 
@@ -264,7 +262,7 @@ describe("TenantMapper & Validator", () => {
     expect(response.name).toBe("Mapper Test");
   });
 
-  it("should validate createTenantSchema and findByIdTenantSchema", () => {
+  it("should validate createTenantSchema", () => {
     const valid = {
       name: "Valid Tenant",
       email: "test@company.com",
@@ -280,15 +278,5 @@ describe("TenantMapper & Validator", () => {
     const weakPassword = { ...valid, password: "weak" };
     const { error: passErr } = createTenantSchema.validate(weakPassword);
     expect(passErr).toBeDefined();
-
-    const { error: idErr } = findByIdTenantSchema.validate({
-      id: "not-a-uuid",
-    });
-    expect(idErr).toBeDefined();
-
-    const { error: validIdErr } = findByIdTenantSchema.validate({
-      id: "123e4567-e89b-12d3-a456-426614174000",
-    });
-    expect(validIdErr).toBeUndefined();
   });
 });

@@ -9,20 +9,7 @@ export const createApiKeyBodySchema = Joi.object({
   }),
 });
 
-export const tenantIdParamSchema = Joi.object({
-  id: Joi.string().uuid().required().messages({
-    "string.empty": "Tenant ID is required",
-    "string.guid": "Tenant ID must be a valid UUID",
-    "any.required": "Tenant ID is required",
-  }),
-});
-
 export const revokeApiKeyParamSchema = Joi.object({
-  id: Joi.string().uuid().required().messages({
-    "string.empty": "Tenant ID is required",
-    "string.guid": "Tenant ID must be a valid UUID",
-    "any.required": "Tenant ID is required",
-  }),
   keyId: Joi.string().uuid().required().messages({
     "string.empty": "Key ID is required",
     "string.guid": "Key ID must be a valid UUID",

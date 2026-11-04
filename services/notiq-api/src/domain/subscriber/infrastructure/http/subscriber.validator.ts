@@ -3,8 +3,6 @@ import Joi from "joi";
 const allowedChannels = ["email", "sms", "in_app", "in-app"];
 
 export const createSubscriberSchema = Joi.object({
-  tenant_id: Joi.string().uuid().optional(),
-  tenantId: Joi.string().uuid().optional(),
   external_id: Joi.string().trim().max(255).optional(),
   externalId: Joi.string().trim().max(255).optional(),
   name: Joi.string().trim().max(255).optional(),
@@ -97,8 +95,6 @@ export const findSubscriberParamSchema = Joi.object({
 export const listSubscribersQuerySchema = Joi.object({
   page: Joi.number().integer().min(1).default(1),
   limit: Joi.number().integer().min(1).max(100).default(10),
-  tenant_id: Joi.string().uuid().optional(),
-  tenantId: Joi.string().uuid().optional(),
   channel: Joi.string()
     .trim()
     .valid(...allowedChannels)

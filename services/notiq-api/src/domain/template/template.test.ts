@@ -21,6 +21,9 @@ import {
 } from "./infrastructure/http/template.validator";
 import { NotFoundError } from "../shared/errors/not-found-error";
 
+const TENANT_A = "11111111-1111-4111-8111-111111111111";
+const TENANT_B = "22222222-2222-4222-8222-222222222222";
+
 class MockTemplateRepository implements ITemplateRepository {
   public templates: Map<string, Template> = new Map();
 
@@ -32,19 +35,20 @@ class MockTemplateRepository implements ITemplateRepository {
     this.templates.set(template.id, template);
   }
 
-  async findById(id: string): Promise<Template | null> {
+  async findById(id: string, tenantId: string): Promise<Template | null> {
     const t = this.templates.get(id);
-    if (!t || t.deletedAt !== null) return null;
+    if (!t || t.deletedAt !== null || t.tenantId !== tenantId) return null;
     return t;
   }
 
   async list(
+    tenantId: string,
     page: number,
     limit: number,
     channel?: string,
   ): Promise<Template[]> {
     let all = Array.from(this.templates.values()).filter(
-      (t) => t.deletedAt === null,
+      (t) => t.deletedAt === null && t.tenantId === tenantId,
     );
     if (channel) {
       all = all.filter((t) => t.channel.value === channel);
@@ -67,6 +71,7 @@ describe("Template Domain Entity", () => {
     const channel = TemplateChannel.create("email");
     const body = TemplateBody.create("Hello {{name}}, welcome to Notiq!");
     const template = Template.create(
+      TENANT_A,
       "Welcome Email",
       channel,
       "Welcome!",
@@ -86,11 +91,15 @@ describe("Template Domain Entity", () => {
     const channel = TemplateChannel.create("email");
     const body = TemplateBody.create("Body content");
 
-    expect(() => Template.create("a", channel, "Subject", body)).toThrow(
+    expect(() => Template.create(
+      TENANT_A,
+      "a", channel, "Subject", body)).toThrow(
       TemplateNameInvalidError,
     );
     expect(() =>
-      Template.create("a".repeat(101), channel, "Subject", body),
+      Template.create(
+      TENANT_A,
+      "a".repeat(101), channel, "Subject", body),
     ).toThrow(TemplateNameInvalidError);
   });
 
@@ -98,7 +107,9 @@ describe("Template Domain Entity", () => {
     const channel = TemplateChannel.create("email");
     const body = TemplateBody.create("Body content");
 
-    expect(() => Template.create("Valid Name", channel, "a", body)).toThrow(
+    expect(() => Template.create(
+      TENANT_A,
+      "Valid Name", channel, "a", body)).toThrow(
       TemplateSubjectInvalidError,
     );
   });
@@ -109,6 +120,7 @@ describe("Template Domain Entity", () => {
 
   it("should support adding, getting, and removing variables", () => {
     const template = Template.create(
+      TENANT_A,
       "Test Template",
       TemplateChannel.sms(),
       "Subject line",
@@ -127,6 +139,7 @@ describe("Template Domain Entity", () => {
 
   it("should update template fields and emit TemplateUpdatedEvent", () => {
     const template = Template.create(
+      TENANT_A,
       "Initial Name",
       TemplateChannel.email(),
       "Initial Subject",
@@ -150,6 +163,7 @@ describe("Template Domain Entity", () => {
 
   it("should soft delete template and disallow further updates", () => {
     const template = Template.create(
+      TENANT_A,
       "Delete Me",
       TemplateChannel.email(),
       "Subject",
@@ -175,6 +189,7 @@ describe("Template Application Use Cases", () => {
     const useCase = new CreateTemplateUsecase(repo, dispatcher);
 
     const template = await useCase.execute({
+      tenantId: TENANT_A,
       name: "Reset Password",
       channel: "email",
       subject: "Reset your password",
@@ -196,6 +211,7 @@ describe("Template Application Use Cases", () => {
     const updateUseCase = new UpdateTemplateUsecase(repo, dispatcher);
 
     const created = await createUseCase.execute({
+      tenantId: TENANT_A,
       name: "Original",
       channel: "email",
       subject: "Original subject",
@@ -204,6 +220,7 @@ describe("Template Application Use Cases", () => {
 
     const updated = await updateUseCase.execute({
       id: created.id,
+      tenantId: TENANT_A,
       name: "Modified Name",
       channel: "sms",
     });
@@ -220,17 +237,21 @@ describe("Template Application Use Cases", () => {
     const getUseCase = new GetTemplateUsecase(repo);
 
     const created = await createUseCase.execute({
+      tenantId: TENANT_A,
       name: "Fetch Me",
       channel: "email",
       subject: "Subject",
       body: "Body",
     });
 
-    const fetched = await getUseCase.execute({ id: created.id });
+    const fetched = await getUseCase.execute({ id: created.id, tenantId: TENANT_A });
     expect(fetched.id).toBe(created.id);
 
     expect(
-      getUseCase.execute({ id: "00000000-0000-0000-0000-000000000000" }),
+      getUseCase.execute({
+        id: "00000000-0000-0000-0000-000000000000",
+        tenantId: TENANT_A,
+      }),
     ).rejects.toThrow(NotFoundError);
   });
 
@@ -241,18 +262,21 @@ describe("Template Application Use Cases", () => {
     const listUseCase = new ListTemplateUsecase(repo, dispatcher);
 
     await createUseCase.execute({
+      tenantId: TENANT_A,
       name: "Email 1",
       channel: "email",
       subject: "S1",
       body: "B1",
     });
     await createUseCase.execute({
+      tenantId: TENANT_A,
       name: "Email 2",
       channel: "email",
       subject: "S2",
       body: "B2",
     });
     await createUseCase.execute({
+      tenantId: TENANT_A,
       name: "SMS 1",
       channel: "sms",
       subject: "S3",
@@ -260,6 +284,7 @@ describe("Template Application Use Cases", () => {
     });
 
     const emailList = await listUseCase.execute({
+      tenantId: TENANT_A,
       page: 1,
       limit: 10,
       channel: "email",
@@ -267,13 +292,18 @@ describe("Template Application Use Cases", () => {
     expect(emailList.length).toBe(2);
 
     const smsList = await listUseCase.execute({
+      tenantId: TENANT_A,
       page: 1,
       limit: 10,
       channel: "sms",
     });
     expect(smsList.length).toBe(1);
 
-    const paginated = await listUseCase.execute({ page: 1, limit: 1 });
+    const paginated = await listUseCase.execute({
+      tenantId: TENANT_A,
+      page: 1,
+      limit: 1,
+    });
     expect(paginated.length).toBe(1);
   });
 
@@ -284,21 +314,81 @@ describe("Template Application Use Cases", () => {
     const deleteUseCase = new DeleteTemplateUsecase(repo, dispatcher);
 
     const created = await createUseCase.execute({
+      tenantId: TENANT_A,
       name: "To be deleted",
       channel: "email",
       subject: "Subject",
       body: "Body",
     });
 
-    await deleteUseCase.execute({ id: created.id });
-    const found = await repo.findById(created.id);
+    await deleteUseCase.execute({ id: created.id, tenantId: TENANT_A });
+    const found = await repo.findById(created.id, TENANT_A);
     expect(found).toBeNull();
+  });
+});
+
+describe("Template tenant isolation", () => {
+  async function setup() {
+    const repo = new MockTemplateRepository();
+    const dispatcher = new MockEventDispatcher();
+    const created = await new CreateTemplateUsecase(repo, dispatcher).execute({
+      tenantId: TENANT_A,
+      name: "Tenant A template",
+      channel: "email",
+      subject: "Subject",
+      body: "Body",
+    });
+    return { repo, dispatcher, created };
+  }
+
+  it("should not let another tenant get a template", async () => {
+    const { repo, created } = await setup();
+    expect(
+      new GetTemplateUsecase(repo).execute({
+        id: created.id,
+        tenantId: TENANT_B,
+      }),
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it("should not let another tenant update a template", async () => {
+    const { repo, dispatcher, created } = await setup();
+    expect(
+      new UpdateTemplateUsecase(repo, dispatcher).execute({
+        id: created.id,
+        tenantId: TENANT_B,
+        name: "Hijacked",
+      }),
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it("should not let another tenant delete a template", async () => {
+    const { repo, dispatcher, created } = await setup();
+    expect(
+      new DeleteTemplateUsecase(repo, dispatcher).execute({
+        id: created.id,
+        tenantId: TENANT_B,
+      }),
+    ).rejects.toThrow(NotFoundError);
+    expect(await repo.findById(created.id, TENANT_A)).not.toBeNull();
+  });
+
+  it("should only list templates of the requesting tenant", async () => {
+    const { repo } = await setup();
+    const list = new ListTemplateUsecase(repo);
+    expect(
+      (await list.execute({ tenantId: TENANT_B, page: 1, limit: 10 })).length,
+    ).toBe(0);
+    expect(
+      (await list.execute({ tenantId: TENANT_A, page: 1, limit: 10 })).length,
+    ).toBe(1);
   });
 });
 
 describe("TemplateMapper & Validator", () => {
   it("should map between domain, persistence, and response DTO", () => {
     const template = Template.create(
+      TENANT_A,
       "Test",
       TemplateChannel.email(),
       "Subj",

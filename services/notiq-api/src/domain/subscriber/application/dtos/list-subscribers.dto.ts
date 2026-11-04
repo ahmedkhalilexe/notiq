@@ -1,5 +1,5 @@
 export interface ListSubscribersDTO {
-  tenantId?: string;
+  tenantId: string;
   page?: number;
   limit?: number;
   channel?: string;

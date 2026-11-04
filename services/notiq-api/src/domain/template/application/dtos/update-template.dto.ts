@@ -1,4 +1,5 @@
 export type UpdateTemplateDTO = {
+  tenantId: string;
   id: string;
   name?: string;
   channel?: string;

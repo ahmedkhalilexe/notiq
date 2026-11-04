@@ -9,7 +9,7 @@ export class GetTemplateUsecase {
   ) {}
 
   public async execute(dto: FindByIDTemplateDTO): Promise<Template> {
-    const template = await this.templateRepository.findById(dto.id);
+    const template = await this.templateRepository.findById(dto.id, dto.tenantId);
 
     if (!template) {
       throw new NotFoundError("Template not found");

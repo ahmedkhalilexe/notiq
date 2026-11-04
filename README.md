@@ -182,18 +182,21 @@ The database schema enforces multi-tenant data isolation, template versioning, s
 ## 📡 API Specification & System Design
 
 ### 🔑 Authentication & Tenants
-* `POST /v1/api/auth/register` - Tenant registration. Returns JWT and tenant record.
-* `POST /v1/api/auth/login` - Tenant login. Returns JWT token.
-* `GET /v1/api/tenants` - List all tenants (paginated).
-* `GET /v1/api/tenants/:id` - Fetch tenant details.
-* `DELETE /v1/api/tenants/:id` - Soft delete tenant account.
+Management routes (tenant, API keys, subscribers, templates) are authenticated with a **JWT** sent as `Authorization: Bearer <token>`. The JWT middleware verifies the token (HS256, `sub` = tenant id), loads the tenant (so deleted tenants are rejected immediately), and attaches `req.tenant` / `req.tenantId`. Controllers use only that tenant context; tenant ids are never read from headers, params, query or body. Cross-tenant access returns `404`.
 
-### 🔐 API Key Management & Middleware
-API keys are decoupled from tenant creation and support a complete lifecycle (**Create ➔ List ➔ Revoke ➔ Verify**):
-* `POST /v1/api/tenants/:id/api-keys` - Generate a new named API key (`{ "name": "Production" }`). Plaintext key (`ntk_<32 hex chars>`) is returned **only once**.
-* `GET /v1/api/tenants/:id/api-keys` - List all API keys for a tenant (`id`, `name`, `status`, `created_at`, `revoked_at`). Plaintext keys and hashes are never exposed.
-* `DELETE /v1/api/tenants/:id/api-keys/:keyId` - Revoke an API key.
-* **`apiValidator` Middleware**: Authenticates programmatic requests via the `X-API-KEY` (or `x-api-key`) header against SHA-256 hashes in `tenant_api`, rejects invalid/revoked keys with `401 Unauthorized`, and injects `req.tenant` and `req.tenantId` onto the request.
+Configuration: `JWT_SECRET` (required, at least 32 characters; the API refuses to start without it) and `JWT_EXPIRES_IN` (default `1h`).
+
+* `POST /v1/api/tenants` - Create a tenant. **Public** (stand-in for signup).
+* `GET /v1/api/tenants/me` - Current tenant (from token).
+* `DELETE /v1/api/tenants/me` - Soft delete the current tenant.
+* `POST /v1/api/auth/register`, `POST /v1/api/auth/login` - **Not implemented yet.** Until login exists there is no endpoint that issues tokens. Refresh tokens are not implemented either.
+
+### 🔐 API Key Management
+API keys are decoupled from tenant creation and support a complete lifecycle (**Create ➔ List ➔ Revoke**). All routes require a JWT and act on the token's tenant:
+* `POST /v1/api/api-keys` - Generate a new named API key (`{ "name": "Production" }`). Plaintext key (`ntk_<32 hex chars>`) is returned **only once**.
+* `GET /v1/api/api-keys` - List the tenant's API keys (`id`, `name`, `status`, `created_at`, `revoked_at`). Plaintext keys and hashes are never exposed.
+* `DELETE /v1/api/api-keys/:keyId` - Revoke an API key.
+* **`apiValidator` middleware** (`X-API-KEY` header, SHA-256 hash lookup in `tenant_api`) is reserved for the future notification-trigger route and is not mounted on the management routes.
 
 ### 👤 Subscribers
 * `POST /v1/api/subscribers` - Create subscriber with channel preferences (e.g. `{ email: "user@example.com", in_app: true }`).

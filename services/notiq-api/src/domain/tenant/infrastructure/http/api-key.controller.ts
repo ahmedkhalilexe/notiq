@@ -5,9 +5,9 @@ import type { RevokeApiKeyUseCase } from "../../application/use-cases/revoke-api
 import type { ListApiKeysUseCase } from "../../application/use-cases/list-api-keys.use-case";
 import {
   createApiKeyBodySchema,
-  tenantIdParamSchema,
   revokeApiKeyParamSchema,
 } from "./api-key.validator";
+import { getTenantId } from "../../../../infra/http/middleware/jwt-auth";
 import { ApiKeyMapper } from "../mappers/api-key.mapper";
 
 export class ApiKeyController {
@@ -18,11 +18,10 @@ export class ApiKeyController {
   ) {}
 
   public async create(req: Request, res: Response): Promise<void> {
-    const params = validate(tenantIdParamSchema, req.params);
     const body = validate(createApiKeyBodySchema, req.body);
 
     const { apiKey, rawKey } = await this.createApiKeyUseCase.execute({
-      tenantId: params.id,
+      tenantId: getTenantId(req),
       name: body.name,
     });
 
@@ -35,10 +34,8 @@ export class ApiKeyController {
   }
 
   public async list(req: Request, res: Response): Promise<void> {
-    const params = validate(tenantIdParamSchema, req.params);
-
     const keys = await this.listApiKeysUseCase.execute({
-      tenantId: params.id,
+      tenantId: getTenantId(req),
     });
 
     res.status(200).json({
@@ -51,7 +48,7 @@ export class ApiKeyController {
     const params = validate(revokeApiKeyParamSchema, req.params);
 
     const revokedKey = await this.revokeApiKeyUseCase.execute({
-      tenantId: params.id,
+      tenantId: getTenantId(req),
       keyId: params.keyId,
     });
 

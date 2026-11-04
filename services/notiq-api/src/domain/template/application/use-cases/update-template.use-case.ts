@@ -14,7 +14,7 @@ export class UpdateTemplateUsecase {
   ) {}
 
   public async execute(dto: UpdateTemplateDTO): Promise<Template> {
-    const template = await this.templateRepository.findById(dto.id);
+    const template = await this.templateRepository.findById(dto.id, dto.tenantId);
 
     if (!template) {
       throw new NotFoundError("Template doesn't exist");
