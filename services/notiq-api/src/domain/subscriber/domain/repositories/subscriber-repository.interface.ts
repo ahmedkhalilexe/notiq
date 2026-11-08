@@ -13,7 +13,10 @@ export interface ISubscriberRepository {
   update(subscriber: Subscriber): Promise<void>;
   findById(id: string, tenantId: string): Promise<Subscriber | null>;
   findByEmail(email: string, tenantId: string): Promise<Subscriber | null>;
-  findByExternalId(externalId: string, tenantId: string): Promise<Subscriber | null>;
+  findByExternalId(
+    externalId: string,
+    tenantId: string,
+  ): Promise<Subscriber | null>;
   list(filter: ListSubscribersFilter): Promise<Subscriber[]>;
   count(filter: Omit<ListSubscribersFilter, "page" | "limit">): Promise<number>;
 }

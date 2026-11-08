@@ -1,5 +1,5 @@
-import { SubscriberNotFoundError } from "../../domain/errors/subscriber-not-found.error";
 import type { Subscriber } from "../../domain/entities/subscriber.entity";
+import { SubscriberNotFoundError } from "../../domain/errors/subscriber-not-found.error";
 import type { ISubscriberRepository } from "../../domain/repositories/subscriber-repository.interface";
 import type { FindSubscriberDTO } from "../dtos/find-subscriber.dto";
 

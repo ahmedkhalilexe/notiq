@@ -1,6 +1,6 @@
 import { NotFoundError } from "../../../shared/errors/not-found-error";
 import type { IEventDispatcher } from "../../../shared/ports";
-import { Template } from "../../domain/entities/template.entity";
+import type { Template } from "../../domain/entities/template.entity";
 import type { ITemplateRepository } from "../../domain/repositories/template-repository.interface";
 import { TemplateBody } from "../../domain/value-objects/template-body.vo";
 import { TemplateChannel } from "../../domain/value-objects/template-channel.vo";
@@ -14,7 +14,10 @@ export class UpdateTemplateUsecase {
   ) {}
 
   public async execute(dto: UpdateTemplateDTO): Promise<Template> {
-    const template = await this.templateRepository.findById(dto.id, dto.tenantId);
+    const template = await this.templateRepository.findById(
+      dto.id,
+      dto.tenantId,
+    );
 
     if (!template) {
       throw new NotFoundError("Template doesn't exist");

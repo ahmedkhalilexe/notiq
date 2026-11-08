@@ -1,23 +1,24 @@
 import { describe, expect, it } from "bun:test";
-import { ApiKey } from "./domain/value-objects/api-key.vo";
-import { ApiKeyEntity } from "./domain/entities/api-key.entity";
-import { TenantApiKeyInvalidError } from "./domain/errors/tenant-api-key-invalid.error";
-import { ApiKeyRevokedError } from "./domain/errors/api-key-revoked.error";
-import { ApiKeyNotFoundError } from "./domain/errors/api-key-not-found.error";
-import { ApiKeyNameInvalidError } from "./domain/errors/api-key-name-invalid.error";
-import { CreateApiKeyUseCase } from "./application/use-cases/create-api-key.use-case";
-import { RevokeApiKeyUseCase } from "./application/use-cases/revoke-api-key.use-case";
-import { ListApiKeysUseCase } from "./application/use-cases/list-api-keys.use-case";
-import { GetTenantByApiKeyUseCase } from "./application/use-cases/get-tenant-by-api-key.use-case";
-import type { IApiKeyRepository } from "./domain/repositories/api-key-repository.interface";
-import type { ITenantRepository } from "./domain/repositories/tenant-repository.interface";
-import { Tenant } from "./domain/entities/tenant.entity";
-import { Password } from "./domain/value-objects/password.vo";
-import { ApiKeyMapper } from "./infrastructure/mappers/api-key.mapper";
+import type { Request, Response } from "express";
 import { createApiValidator } from "../../infra/http/middleware/api-validator";
+import { NotFoundError } from "../shared/errors/not-found-error";
 import type { DomainEvent } from "../shared/events";
 import type { IEventDispatcher } from "../shared/ports";
-import { NotFoundError } from "../shared/errors/not-found-error";
+import { CreateApiKeyUseCase } from "./application/use-cases/create-api-key.use-case";
+import { GetTenantByApiKeyUseCase } from "./application/use-cases/get-tenant-by-api-key.use-case";
+import { ListApiKeysUseCase } from "./application/use-cases/list-api-keys.use-case";
+import { RevokeApiKeyUseCase } from "./application/use-cases/revoke-api-key.use-case";
+import { ApiKeyEntity } from "./domain/entities/api-key.entity";
+import { Tenant } from "./domain/entities/tenant.entity";
+import { ApiKeyNameInvalidError } from "./domain/errors/api-key-name-invalid.error";
+import { ApiKeyNotFoundError } from "./domain/errors/api-key-not-found.error";
+import { ApiKeyRevokedError } from "./domain/errors/api-key-revoked.error";
+import { TenantApiKeyInvalidError } from "./domain/errors/tenant-api-key-invalid.error";
+import type { IApiKeyRepository } from "./domain/repositories/api-key-repository.interface";
+import type { ITenantRepository } from "./domain/repositories/tenant-repository.interface";
+import { ApiKey } from "./domain/value-objects/api-key.vo";
+import { Password } from "./domain/value-objects/password.vo";
+import { ApiKeyMapper } from "./infrastructure/mappers/api-key.mapper";
 
 class MockApiKeyRepository implements IApiKeyRepository {
   public keys: Map<string, ApiKeyEntity> = new Map();
@@ -104,7 +105,7 @@ describe("ApiKey Value Object", () => {
   });
 
   it("should create ApiKey when valid format is provided", () => {
-    const raw = "ntk_" + "a".repeat(32);
+    const raw = `ntk_${"a".repeat(32)}`;
     const apiKey = ApiKey.create(raw);
     expect(apiKey.value).toBe(raw);
   });
@@ -342,8 +343,8 @@ describe("ApiKeyMapper", () => {
     expect(response.id).toBe(entity.id);
     expect(response.name).toBe("Public Key");
     expect(response.status).toBe("active");
-    expect((response as any).key).toBeUndefined();
-    expect((response as any).keyHash).toBeUndefined();
+    expect(response).not.toHaveProperty("key");
+    expect(response).not.toHaveProperty("keyHash");
   });
 });
 
@@ -355,18 +356,18 @@ describe("apiValidator Middleware", () => {
     const middleware = createApiValidator(useCase);
 
     let status = 0;
-    let jsonBody: any = null;
-    const req: any = { headers: {} };
-    const res: any = {
+    let jsonBody: { code?: string } | null = null;
+    const req = { headers: {} } as Request;
+    const res = {
       status: (code: number) => {
         status = code;
         return {
-          json: (body: any) => {
+          json: (body: { code?: string }) => {
             jsonBody = body;
           },
         };
       },
-    };
+    } as unknown as Response;
     let nextCalled = false;
     const next = () => {
       nextCalled = true;
@@ -374,7 +375,7 @@ describe("apiValidator Middleware", () => {
 
     await middleware(req, res, next);
     expect(status).toBe(401);
-    expect(jsonBody.code).toBe("UNAUTHORIZED");
+    expect((jsonBody as { code?: string } | null)?.code).toBe("UNAUTHORIZED");
     expect(nextCalled).toBe(false);
   });
 
@@ -400,12 +401,12 @@ describe("apiValidator Middleware", () => {
     const useCase = new GetTenantByApiKeyUseCase(tenantRepo, keyRepo);
     const middleware = createApiValidator(useCase);
 
-    const req: any = {
+    const req = {
       headers: {
         "x-api-key": rawApiKey.value,
       },
-    };
-    const res: any = {};
+    } as unknown as Request;
+    const res = {} as Response;
     let nextCalled = false;
     const next = () => {
       nextCalled = true;
@@ -413,7 +414,7 @@ describe("apiValidator Middleware", () => {
 
     await middleware(req, res, next);
     expect(nextCalled).toBe(true);
-    expect(req.tenant.id).toBe(tenant.id);
+    expect(req.tenant?.id).toBe(tenant.id);
     expect(req.tenantId).toBe(tenant.id);
   });
 });

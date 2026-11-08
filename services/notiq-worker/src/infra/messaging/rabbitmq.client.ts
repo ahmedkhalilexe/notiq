@@ -1,11 +1,13 @@
+import type { Channel, ChannelModel } from "amqplib";
 import amqplib from "amqplib";
-import type { ChannelModel, Channel } from "amqplib";
 
 let connection: ChannelModel | null = null;
 let channel: Channel | null = null;
 
 export async function connectRabbitMQ(): Promise<void> {
-  connection = await amqplib.connect(process.env.RABBITMQ_URL!);
+  const url = process.env.RABBITMQ_URL;
+  if (!url) throw new Error("RABBITMQ_URL is not set");
+  connection = await amqplib.connect(url);
   channel = await connection.createChannel();
 
   await channel.assertExchange("notiq.notifications", "direct", {

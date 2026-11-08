@@ -5,8 +5,8 @@ import type {
   ListSubscribersFilter,
 } from "../../domain/repositories/subscriber-repository.interface";
 import {
-  SubscriberMapper,
   type SubscriberChannelPersistenceRow,
+  SubscriberMapper,
   type SubscriberPersistenceRow,
 } from "../mappers/subscriber.mapper";
 
@@ -15,7 +15,9 @@ export class SubscriberRepository implements ISubscriberRepository {
 
   async save(subscriber: Subscriber): Promise<void> {
     await this.db.transaction(async (trx) => {
-      await trx("subscribers").insert(SubscriberMapper.toPersistence(subscriber));
+      await trx("subscribers").insert(
+        SubscriberMapper.toPersistence(subscriber),
+      );
 
       const channels = subscriber.getChannels();
       if (channels.length > 0) {
@@ -168,7 +170,7 @@ export class SubscriberRepository implements ISubscriberRepository {
       if (!channelMap.has(ch.subscriber_id)) {
         channelMap.set(ch.subscriber_id, []);
       }
-      channelMap.get(ch.subscriber_id)!.push(ch);
+      channelMap.get(ch.subscriber_id)?.push(ch);
     }
 
     return rawSubscribers.map((raw) =>
@@ -201,7 +203,9 @@ export class SubscriberRepository implements ISubscriberRepository {
         query = query.where("subscriber_channels.enabled", filter.enabled);
       }
 
-      const result = await query.countDistinct("subscribers.id as count").first();
+      const result = await query
+        .countDistinct("subscribers.id as count")
+        .first();
       return Number(result?.count || 0);
     }
 

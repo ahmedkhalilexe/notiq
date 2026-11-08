@@ -1,20 +1,20 @@
 import type { Request, Response } from "express";
-import { validate } from "../../../shared/validation/validate";
 import { getTenantId } from "../../../../infra/http/middleware/jwt-auth";
+import { validate } from "../../../shared/validation/validate";
 import type { CreateSubscriberUseCase } from "../../application/use-cases/create-subscriber.use-case";
+import type { DeleteSubscriberUseCase } from "../../application/use-cases/delete-subscriber.use-case";
 import type { GetSubscriberUseCase } from "../../application/use-cases/get-subscriber.use-case";
+import type { ListSubscribersUseCase } from "../../application/use-cases/list-subscribers.use-case";
 import type { UpdateSubscriberUseCase } from "../../application/use-cases/update-subscriber.use-case";
 import type { UpdateSubscriberPreferenceUseCase } from "../../application/use-cases/update-subscriber-preference.use-case";
-import type { DeleteSubscriberUseCase } from "../../application/use-cases/delete-subscriber.use-case";
-import type { ListSubscribersUseCase } from "../../application/use-cases/list-subscribers.use-case";
+import { SubscriberMapper } from "../mappers/subscriber.mapper";
 import {
   createSubscriberSchema,
-  updateSubscriberSchema,
-  updatePreferenceSchema,
   findSubscriberParamSchema,
   listSubscribersQuerySchema,
+  updatePreferenceSchema,
+  updateSubscriberSchema,
 } from "./subscriber.validator";
-import { SubscriberMapper } from "../mappers/subscriber.mapper";
 
 export class SubscriberController {
   public constructor(

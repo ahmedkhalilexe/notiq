@@ -1,19 +1,19 @@
 import type { Request, Response } from "express";
+import { getTenantId } from "../../../../infra/http/middleware/jwt-auth";
 import { validate } from "../../../shared/validation/validate";
 import type { CreateTemplateUsecase } from "../../application/use-cases/create-template.use-case";
-import type { UpdateTemplateUsecase } from "../../application/use-cases/update-template.use-case";
+import type { DeleteTemplateUsecase } from "../../application/use-cases/delete-template.use-case";
 import type { GetTemplateUsecase } from "../../application/use-cases/get-template.use-case";
 import type { ListTemplateUsecase } from "../../application/use-cases/list-template.use-case";
-import type { DeleteTemplateUsecase } from "../../application/use-cases/delete-template.use-case";
+import type { UpdateTemplateUsecase } from "../../application/use-cases/update-template.use-case";
+import { TemplateMapper } from "../mappers/template.mapper";
 import {
   createTemplateSchema,
-  updateTemplateSchema,
-  findByIdTemplateSchema,
   deleteTemplateSchema,
+  findByIdTemplateSchema,
   listTemplateSchema,
+  updateTemplateSchema,
 } from "./template.validator";
-import { getTenantId } from "../../../../infra/http/middleware/jwt-auth";
-import { TemplateMapper } from "../mappers/template.mapper";
 
 export class TemplateController {
   public constructor(

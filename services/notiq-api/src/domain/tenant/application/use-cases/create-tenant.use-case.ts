@@ -1,10 +1,10 @@
+import bcrypt from "bcrypt";
 import type { IEventDispatcher } from "../../../shared/ports";
 import { Tenant } from "../../domain/entities/tenant.entity";
 import { TenantEmailExistsError } from "../../domain/errors/tenant-email-exists.error";
 import type { ITenantRepository } from "../../domain/repositories/tenant-repository.interface";
 import { Password } from "../../domain/value-objects/password.vo";
 import type { CreateTenantDTO } from "../dtos/create-tenant.dto";
-import bcrypt from "bcrypt";
 
 export class CreateTenantUseCase {
   public constructor(

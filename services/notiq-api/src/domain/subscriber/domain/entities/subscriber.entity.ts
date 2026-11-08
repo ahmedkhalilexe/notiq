@@ -1,9 +1,9 @@
 import type { DomainEvent } from "../../../shared/events";
 import { SubscriberIdentifierMissingError } from "../errors/subscriber-identifier-missing.error";
 import { SubscriberCreatedEvent } from "../events/subscriber-created.event";
-import { SubscriberUpdatedEvent } from "../events/subscriber-updated.event";
 import { SubscriberDeletedEvent } from "../events/subscriber-deleted.event";
 import { SubscriberPreferenceUpdatedEvent } from "../events/subscriber-preference-updated.event";
+import { SubscriberUpdatedEvent } from "../events/subscriber-updated.event";
 import {
   SubscriberChannelPreference,
   type SupportedChannel,
@@ -20,8 +20,10 @@ export interface CreateSubscriberParams {
 
 export class Subscriber {
   private _events: DomainEvent[] = [];
-  private readonly _channels: Map<SupportedChannel, SubscriberChannelPreference> =
-    new Map();
+  private readonly _channels: Map<
+    SupportedChannel,
+    SubscriberChannelPreference
+  > = new Map();
 
   public constructor(
     readonly id: string,
@@ -88,7 +90,9 @@ export class Subscriber {
       null,
     );
 
-    subscriber._events.push(new SubscriberCreatedEvent(subscriber.id, subscriber.tenantId));
+    subscriber._events.push(
+      new SubscriberCreatedEvent(subscriber.id, subscriber.tenantId),
+    );
 
     return subscriber;
   }
@@ -130,11 +134,15 @@ export class Subscriber {
     }
 
     const newExternalId =
-      params.externalId !== undefined ? params.externalId?.trim() || null : this._externalId;
+      params.externalId !== undefined
+        ? params.externalId?.trim() || null
+        : this._externalId;
     const newName =
       params.name !== undefined ? params.name?.trim() || null : this._name;
     const newEmail =
-      params.email !== undefined ? params.email?.trim().toLowerCase() || null : this._email;
+      params.email !== undefined
+        ? params.email?.trim().toLowerCase() || null
+        : this._email;
     const newPhone =
       params.phone !== undefined ? params.phone?.trim() || null : this._phone;
 
@@ -148,13 +156,13 @@ export class Subscriber {
     this._phone = newPhone;
     this._updatedAt = new Date();
 
-    if (newEmail && this._channels.has("email")) {
-      const current = this._channels.get("email")!;
-      this._channels.set("email", current.withValue(newEmail));
+    const emailChannel = this._channels.get("email");
+    if (newEmail && emailChannel) {
+      this._channels.set("email", emailChannel.withValue(newEmail));
     }
-    if (newPhone && this._channels.has("sms")) {
-      const current = this._channels.get("sms")!;
-      this._channels.set("sms", current.withValue(newPhone));
+    const smsChannel = this._channels.get("sms");
+    if (newPhone && smsChannel) {
+      this._channels.set("sms", smsChannel.withValue(newPhone));
     }
 
     this._events.push(new SubscriberUpdatedEvent(this.id, this.tenantId));
@@ -174,7 +182,7 @@ export class Subscriber {
       enabled,
       value !== undefined
         ? value
-        : this._channels.get(channel as SupportedChannel)?.value ?? null,
+        : (this._channels.get(channel as SupportedChannel)?.value ?? null),
     );
 
     this._channels.set(pref.channel, pref);

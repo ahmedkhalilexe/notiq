@@ -1,25 +1,25 @@
 import { describe, expect, it } from "bun:test";
+import { NotFoundError } from "../shared/errors/not-found-error";
+import type { DomainEvent } from "../shared/events";
+import type { IEventDispatcher } from "../shared/ports";
+import { CreateTemplateUsecase } from "./application/use-cases/create-template.use-case";
+import { DeleteTemplateUsecase } from "./application/use-cases/delete-template.use-case";
+import { GetTemplateUsecase } from "./application/use-cases/get-template.use-case";
+import { ListTemplateUsecase } from "./application/use-cases/list-template.use-case";
+import { UpdateTemplateUsecase } from "./application/use-cases/update-template.use-case";
 import { Template } from "./domain/entities/template.entity";
-import { TemplateChannel } from "./domain/value-objects/template-channel.vo";
-import { TemplateBody } from "./domain/value-objects/template-body.vo";
-import { TemplateVariable } from "./domain/value-objects/template-variable.vo";
 import { TemplateNameInvalidError } from "./domain/errors/template-name-invalid.error";
 import { TemplateSubjectInvalidError } from "./domain/errors/template-subject-invalid.error";
 import { TemplateVariableExistsError } from "./domain/errors/template-variable-duplicate.error";
-import { CreateTemplateUsecase } from "./application/use-cases/create-template.use-case";
-import { UpdateTemplateUsecase } from "./application/use-cases/update-template.use-case";
-import { GetTemplateUsecase } from "./application/use-cases/get-template.use-case";
-import { ListTemplateUsecase } from "./application/use-cases/list-template.use-case";
-import { DeleteTemplateUsecase } from "./application/use-cases/delete-template.use-case";
 import type { ITemplateRepository } from "./domain/repositories/template-repository.interface";
-import type { IEventDispatcher } from "../shared/ports";
-import type { DomainEvent } from "../shared/events";
-import { TemplateMapper } from "./infrastructure/mappers/template.mapper";
+import { TemplateBody } from "./domain/value-objects/template-body.vo";
+import { TemplateChannel } from "./domain/value-objects/template-channel.vo";
+import { TemplateVariable } from "./domain/value-objects/template-variable.vo";
 import {
   createTemplateSchema,
   updateTemplateSchema,
 } from "./infrastructure/http/template.validator";
-import { NotFoundError } from "../shared/errors/not-found-error";
+import { TemplateMapper } from "./infrastructure/mappers/template.mapper";
 
 const TENANT_A = "11111111-1111-4111-8111-111111111111";
 const TENANT_B = "22222222-2222-4222-8222-222222222222";
@@ -91,15 +91,11 @@ describe("Template Domain Entity", () => {
     const channel = TemplateChannel.create("email");
     const body = TemplateBody.create("Body content");
 
-    expect(() => Template.create(
-      TENANT_A,
-      "a", channel, "Subject", body)).toThrow(
-      TemplateNameInvalidError,
-    );
     expect(() =>
-      Template.create(
-      TENANT_A,
-      "a".repeat(101), channel, "Subject", body),
+      Template.create(TENANT_A, "a", channel, "Subject", body),
+    ).toThrow(TemplateNameInvalidError);
+    expect(() =>
+      Template.create(TENANT_A, "a".repeat(101), channel, "Subject", body),
     ).toThrow(TemplateNameInvalidError);
   });
 
@@ -107,11 +103,9 @@ describe("Template Domain Entity", () => {
     const channel = TemplateChannel.create("email");
     const body = TemplateBody.create("Body content");
 
-    expect(() => Template.create(
-      TENANT_A,
-      "Valid Name", channel, "a", body)).toThrow(
-      TemplateSubjectInvalidError,
-    );
+    expect(() =>
+      Template.create(TENANT_A, "Valid Name", channel, "a", body),
+    ).toThrow(TemplateSubjectInvalidError);
   });
 
   it("should throw error on invalid channel", () => {
@@ -244,7 +238,10 @@ describe("Template Application Use Cases", () => {
       body: "Body",
     });
 
-    const fetched = await getUseCase.execute({ id: created.id, tenantId: TENANT_A });
+    const fetched = await getUseCase.execute({
+      id: created.id,
+      tenantId: TENANT_A,
+    });
     expect(fetched.id).toBe(created.id);
 
     expect(

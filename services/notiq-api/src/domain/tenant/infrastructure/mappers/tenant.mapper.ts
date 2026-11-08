@@ -18,8 +18,8 @@ export interface TenantResponseDTO {
   deleted_at: Date | null;
 }
 
-export class TenantMapper {
-  static toDomain(raw: TenantPersistence): Tenant {
+export const TenantMapper = {
+  toDomain(raw: TenantPersistence): Tenant {
     const password = Password.create(raw.password);
     return Tenant.reconstitute(
       raw.id,
@@ -29,9 +29,9 @@ export class TenantMapper {
       new Date(raw.created_at),
       raw.deleted_at ? new Date(raw.deleted_at) : null,
     );
-  }
+  },
 
-  static toPersistence(tenant: Tenant) {
+  toPersistence(tenant: Tenant) {
     return {
       id: tenant.id,
       name: tenant.name,
@@ -40,9 +40,9 @@ export class TenantMapper {
       created_at: tenant.createdAt,
       deleted_at: tenant.deletedAt,
     };
-  }
+  },
 
-  static toResponse(tenant: Tenant): TenantResponseDTO {
+  toResponse(tenant: Tenant): TenantResponseDTO {
     return {
       id: tenant.id,
       name: tenant.name,
@@ -50,5 +50,5 @@ export class TenantMapper {
       created_at: tenant.createdAt,
       deleted_at: tenant.deletedAt,
     };
-  }
-}
+  },
+};

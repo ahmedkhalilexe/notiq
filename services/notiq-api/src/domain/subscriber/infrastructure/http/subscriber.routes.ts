@@ -1,6 +1,6 @@
 import { Router } from "express";
-import type { SubscriberController } from "./subscriber.controller";
 import { asyncHandler } from "../../../../infra/http/middleware/async-handler";
+import type { SubscriberController } from "./subscriber.controller";
 
 export function createSubscriberRoutes(
   controller: SubscriberController,

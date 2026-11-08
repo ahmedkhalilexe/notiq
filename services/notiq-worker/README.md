@@ -7,11 +7,13 @@ It listens to RabbitMQ channel queues (`email_queue`, `in_app_queue`, `sms_queue
 ## Development
 
 Install dependencies:
+
 ```bash
 bun install
 ```
 
 Run in development mode (hot reload):
+
 ```bash
 bun dev
 ```

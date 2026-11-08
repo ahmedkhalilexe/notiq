@@ -9,7 +9,7 @@ export class TemplateChannel {
       normalized = "in_app";
     }
 
-    if (!TemplateChannel.ALLOWED.includes(normalized as any)) {
+    if (!(TemplateChannel.ALLOWED as readonly string[]).includes(normalized)) {
       throw new Error(
         `Invalid channel: ${value}. Allowed: ${TemplateChannel.ALLOWED.join(", ")}, in-app`,
       );

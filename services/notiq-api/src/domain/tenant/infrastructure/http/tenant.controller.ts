@@ -1,12 +1,12 @@
 import type { Request, Response } from "express";
-import type { CreateTenantUseCase } from "../../application/use-cases/create-tenant.use-case";
-import { createTenantSchema } from "./tenant.validator";
-import type { CreateTenantDTO } from "../../application/dtos/create-tenant.dto";
-import { validate } from "../../../shared/validation/validate";
-import type { FindByIdTenantUsecase } from "../../application/use-cases/get-tenant.use-case";
-import type { DeleteTenantUsecase } from "../../application/use-cases/delete-tenant.use-case";
 import { getTenantId } from "../../../../infra/http/middleware/jwt-auth";
+import { validate } from "../../../shared/validation/validate";
+import type { CreateTenantDTO } from "../../application/dtos/create-tenant.dto";
+import type { CreateTenantUseCase } from "../../application/use-cases/create-tenant.use-case";
+import type { DeleteTenantUsecase } from "../../application/use-cases/delete-tenant.use-case";
+import type { FindByIdTenantUsecase } from "../../application/use-cases/get-tenant.use-case";
 import { TenantMapper } from "../mappers/tenant.mapper";
+import { createTenantSchema } from "./tenant.validator";
 
 export class TenantController {
   public constructor(

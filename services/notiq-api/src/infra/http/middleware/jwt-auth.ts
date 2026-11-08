@@ -1,7 +1,7 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
+import { UnauthorizedError } from "../../../domain/shared/errors/unauthorized-error";
 import type { FindByIdTenantUsecase } from "../../../domain/tenant/application/use-cases/get-tenant.use-case";
 import type { Tenant } from "../../../domain/tenant/domain/entities/tenant.entity";
-import { UnauthorizedError } from "../../../domain/shared/errors/unauthorized-error";
 import type { TokenService } from "../../auth/token.service";
 
 declare global {

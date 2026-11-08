@@ -1,10 +1,10 @@
 import { NotFoundError } from "../../../shared/errors/not-found-error";
-import type { ITenantRepository } from "../../domain/repositories/tenant-repository.interface";
-import type { IApiKeyRepository } from "../../domain/repositories/api-key-repository.interface";
-import { ApiKey } from "../../domain/value-objects/api-key.vo";
+import type { Tenant } from "../../domain/entities/tenant.entity";
 import { ApiKeyRevokedError } from "../../domain/errors/api-key-revoked.error";
 import { TenantApiKeyInvalidError } from "../../domain/errors/tenant-api-key-invalid.error";
-import type { Tenant } from "../../domain/entities/tenant.entity";
+import type { IApiKeyRepository } from "../../domain/repositories/api-key-repository.interface";
+import type { ITenantRepository } from "../../domain/repositories/tenant-repository.interface";
+import { ApiKey } from "../../domain/value-objects/api-key.vo";
 import type { FindByApiKeyTenantDTO } from "../dtos/find-by-api-key-tenant.dto";
 
 export class GetTenantByApiKeyUseCase {

@@ -5,11 +5,22 @@
   "private": true,
   "scripts": {
     "dev": "bun --watch src/main.ts",
-    "start": "bun src/main.ts"
+    "start": "bun src/main.ts",
+    "lint": "bunx biome lint",
+    "lint:write": "bunx biome lint --write",
+    "format": "bunx biome format",
+    "format:write": "bunx biome format --write",
+    "check": "bunx biome check",
+    "check:write": "bunx biome check --write",
+    "ci": "bunx biome ci",
+    "typecheck": "bun x tsc --noEmit",
+    "test": "bun test",
+    "build": "docker build -t notiq-api ."
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/jsonwebtoken": "^9.0.10"
+    "@types/jsonwebtoken": "^9.0.10",
+    "@biomejs/biome": "2.6.5"
   },
   "peerDependencies": {
     "typescript": "^5"

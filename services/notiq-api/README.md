@@ -27,21 +27,25 @@ API keys are decoupled from tenant creation and follow an independent lifecycle:
 ## 🛠 Development
 
 Install dependencies:
+
 ```bash
 bun install
 ```
 
 Run in development mode (hot reload):
+
 ```bash
 bun dev
 ```
 
 Run tests:
+
 ```bash
 bun test
 ```
 
 Run database migrations:
+
 ```bash
 bun run knex migrate:latest --knexfile knexfile.ts
 ```

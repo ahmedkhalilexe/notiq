@@ -22,7 +22,10 @@ export class UpdateSubscriberUseCase {
       throw new SubscriberNotFoundError();
     }
 
-    if (dto.email && dto.email.toLowerCase() !== subscriber.email?.toLowerCase()) {
+    if (
+      dto.email &&
+      dto.email.toLowerCase() !== subscriber.email?.toLowerCase()
+    ) {
       const existing = await this.subscriberRepository.findByEmail(
         dto.email,
         subscriber.tenantId,

@@ -1,14 +1,14 @@
 import type { Request, Response } from "express";
+import { getTenantId } from "../../../../infra/http/middleware/jwt-auth";
 import { validate } from "../../../shared/validation/validate";
 import type { CreateApiKeyUseCase } from "../../application/use-cases/create-api-key.use-case";
-import type { RevokeApiKeyUseCase } from "../../application/use-cases/revoke-api-key.use-case";
 import type { ListApiKeysUseCase } from "../../application/use-cases/list-api-keys.use-case";
+import type { RevokeApiKeyUseCase } from "../../application/use-cases/revoke-api-key.use-case";
+import { ApiKeyMapper } from "../mappers/api-key.mapper";
 import {
   createApiKeyBodySchema,
   revokeApiKeyParamSchema,
 } from "./api-key.validator";
-import { getTenantId } from "../../../../infra/http/middleware/jwt-auth";
-import { ApiKeyMapper } from "../mappers/api-key.mapper";
 
 export class ApiKeyController {
   public constructor(

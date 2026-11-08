@@ -1,30 +1,28 @@
 import { describe, expect, it } from "bun:test";
+import type { DomainEvent } from "../shared/events";
+import type { IEventDispatcher } from "../shared/ports";
+import { CreateSubscriberUseCase } from "./application/use-cases/create-subscriber.use-case";
+import { DeleteSubscriberUseCase } from "./application/use-cases/delete-subscriber.use-case";
+import { GetSubscriberUseCase } from "./application/use-cases/get-subscriber.use-case";
+import { ListSubscribersUseCase } from "./application/use-cases/list-subscribers.use-case";
+import { UpdateSubscriberPreferenceUseCase } from "./application/use-cases/update-subscriber-preference.use-case";
 import { Subscriber } from "./domain/entities/subscriber.entity";
-import { SubscriberChannelPreference } from "./domain/value-objects/subscriber-channel-preference.vo";
-import { SubscriberIdentifierMissingError } from "./domain/errors/subscriber-identifier-missing.error";
 import { SubscriberEmailExistsError } from "./domain/errors/subscriber-email-exists.error";
 import { SubscriberExternalIdExistsError } from "./domain/errors/subscriber-external-id-exists.error";
-import { SubscriberNotFoundError } from "./domain/errors/subscriber-not-found.error";
+import { SubscriberIdentifierMissingError } from "./domain/errors/subscriber-identifier-missing.error";
 import { SubscriberInvalidChannelError } from "./domain/errors/subscriber-invalid-channel.error";
-import { CreateSubscriberUseCase } from "./application/use-cases/create-subscriber.use-case";
-import { GetSubscriberUseCase } from "./application/use-cases/get-subscriber.use-case";
-import { UpdateSubscriberUseCase } from "./application/use-cases/update-subscriber.use-case";
-import { UpdateSubscriberPreferenceUseCase } from "./application/use-cases/update-subscriber-preference.use-case";
-import { DeleteSubscriberUseCase } from "./application/use-cases/delete-subscriber.use-case";
-import { ListSubscribersUseCase } from "./application/use-cases/list-subscribers.use-case";
+import { SubscriberNotFoundError } from "./domain/errors/subscriber-not-found.error";
 import type {
   ISubscriberRepository,
   ListSubscribersFilter,
 } from "./domain/repositories/subscriber-repository.interface";
-import type { IEventDispatcher } from "../shared/ports";
-import type { DomainEvent } from "../shared/events";
-import { SubscriberMapper } from "./infrastructure/mappers/subscriber.mapper";
+import { SubscriberChannelPreference } from "./domain/value-objects/subscriber-channel-preference.vo";
 import {
   createSubscriberSchema,
-  updateSubscriberSchema,
-  updatePreferenceSchema,
   listSubscribersQuerySchema,
+  updatePreferenceSchema,
 } from "./infrastructure/http/subscriber.validator";
+import { SubscriberMapper } from "./infrastructure/mappers/subscriber.mapper";
 
 class MockSubscriberRepository implements ISubscriberRepository {
   public subscribers: Map<string, Subscriber> = new Map();
@@ -44,7 +42,10 @@ class MockSubscriberRepository implements ISubscriberRepository {
     return s;
   }
 
-  async findByEmail(email: string, tenantId: string): Promise<Subscriber | null> {
+  async findByEmail(
+    email: string,
+    tenantId: string,
+  ): Promise<Subscriber | null> {
     const normalized = email.toLowerCase().trim();
     for (const s of this.subscribers.values()) {
       if (
@@ -152,7 +153,11 @@ describe("Subscriber Domain Entity & Value Objects", () => {
   });
 
   it("should normalize in-app channel to in_app and validate allowed channels", () => {
-    const pref = SubscriberChannelPreference.create("in-app", true, "token_123");
+    const pref = SubscriberChannelPreference.create(
+      "in-app",
+      true,
+      "token_123",
+    );
     expect(pref.channel).toBe("in_app");
     expect(pref.enabled).toBe(true);
     expect(pref.value).toBe("token_123");
@@ -271,7 +276,10 @@ describe("Subscriber Application Use Cases", () => {
       email: "find@example.com",
     });
 
-    const found = await getUseCase.execute({ id: created.id, tenantId: "tenant-1" });
+    const found = await getUseCase.execute({
+      id: created.id,
+      tenantId: "tenant-1",
+    });
     expect(found.id).toBe(created.id);
 
     expect(
@@ -441,10 +449,12 @@ describe("Subscriber tenant isolation", () => {
   it("should not expose or modify subscribers of another tenant", async () => {
     const repo = new MockSubscriberRepository();
     const dispatcher = new MockEventDispatcher();
-    const created = await new CreateSubscriberUseCase(repo, dispatcher).execute({
-      tenantId: "tenant-1",
-      email: "iso@example.com",
-    });
+    const created = await new CreateSubscriberUseCase(repo, dispatcher).execute(
+      {
+        tenantId: "tenant-1",
+        email: "iso@example.com",
+      },
+    );
 
     expect(
       new GetSubscriberUseCase(repo).execute({

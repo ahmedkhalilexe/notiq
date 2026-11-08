@@ -43,8 +43,8 @@ export interface SubscriberResponseDTO {
   deleted_at: Date | null;
 }
 
-export class SubscriberMapper {
-  static toDomain(
+export const SubscriberMapper = {
+  toDomain(
     raw: SubscriberPersistenceRow,
     channelsRaw: SubscriberChannelPersistenceRow[] = [],
   ): Subscriber {
@@ -64,9 +64,9 @@ export class SubscriberMapper {
       new Date(raw.updated_at),
       raw.deleted_at ? new Date(raw.deleted_at) : null,
     );
-  }
+  },
 
-  static toPersistence(subscriber: Subscriber): SubscriberPersistenceRow {
+  toPersistence(subscriber: Subscriber): SubscriberPersistenceRow {
     return {
       id: subscriber.id,
       tenant_id: subscriber.tenantId,
@@ -78,9 +78,9 @@ export class SubscriberMapper {
       updated_at: subscriber.updatedAt,
       deleted_at: subscriber.deletedAt,
     };
-  }
+  },
 
-  static toResponse(subscriber: Subscriber): SubscriberResponseDTO {
+  toResponse(subscriber: Subscriber): SubscriberResponseDTO {
     return {
       id: subscriber.id,
       tenant_id: subscriber.tenantId,
@@ -97,5 +97,5 @@ export class SubscriberMapper {
       updated_at: subscriber.updatedAt,
       deleted_at: subscriber.deletedAt,
     };
-  }
-}
+  },
+};

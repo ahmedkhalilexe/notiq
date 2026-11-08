@@ -3,7 +3,7 @@ import { TenantEmailInvalidError } from "../errors/tenant-email-invalid.error";
 import { TenantNameInvalidError } from "../errors/tenant-name-invalid.error";
 import { TenantCreatedEvent } from "../events/tenant-created.event";
 import { TenantDeletedEvent } from "../events/tenant-deleted.event";
-import { Password } from "../value-objects/password.vo";
+import type { Password } from "../value-objects/password.vo";
 
 export class Tenant {
   private _events: DomainEvent[] = [];

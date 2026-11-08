@@ -47,6 +47,10 @@ export class SubscriberChannelPreference {
   }
 
   public withValue(value: string | null): SubscriberChannelPreference {
-    return new SubscriberChannelPreference(this.channel, this.enabled, value ? value.trim() : null);
+    return new SubscriberChannelPreference(
+      this.channel,
+      this.enabled,
+      value ? value.trim() : null,
+    );
   }
 }

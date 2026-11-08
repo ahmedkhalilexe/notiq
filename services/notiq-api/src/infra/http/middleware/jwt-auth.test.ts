@@ -1,12 +1,12 @@
 import { describe, expect, it } from "bun:test";
-import type { Request } from "express";
-import { createJwtAuth, getTenantId } from "./jwt-auth";
-import { TokenService } from "../../auth/token.service";
+import type { Request, Response } from "express";
+import { UnauthorizedError } from "../../../domain/shared/errors/unauthorized-error";
 import { FindByIdTenantUsecase } from "../../../domain/tenant/application/use-cases/get-tenant.use-case";
 import { Tenant } from "../../../domain/tenant/domain/entities/tenant.entity";
-import { Password } from "../../../domain/tenant/domain/value-objects/password.vo";
-import { UnauthorizedError } from "../../../domain/shared/errors/unauthorized-error";
 import type { ITenantRepository } from "../../../domain/tenant/domain/repositories/tenant-repository.interface";
+import { Password } from "../../../domain/tenant/domain/value-objects/password.vo";
+import { TokenService } from "../../auth/token.service";
+import { createJwtAuth, getTenantId } from "./jwt-auth";
 
 const tokens = new TokenService({ secret: "a".repeat(32), expiresIn: "1h" });
 
@@ -31,7 +31,7 @@ async function run(
   const req = { headers: { authorization } } as unknown as Request;
   let error: unknown;
   let called = false;
-  await middleware(req, {} as any, (err?: unknown) => {
+  await middleware(req, {} as Response, (err?: unknown) => {
     called = true;
     error = err;
   });
@@ -48,7 +48,12 @@ describe("jwtAuth middleware", () => {
   it("rejects a non-Bearer scheme and malformed headers", async () => {
     const { middleware, tenant } = setup();
     const token = tokens.sign({ tenantId: tenant.id });
-    for (const header of [`Basic ${token}`, "Bearer", `Bearer ${token} extra`, token]) {
+    for (const header of [
+      `Basic ${token}`,
+      "Bearer",
+      `Bearer ${token} extra`,
+      token,
+    ]) {
       const { error } = await run(middleware, header);
       expect(error).toBeInstanceOf(UnauthorizedError);
     }
