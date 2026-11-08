@@ -1,22 +1,19 @@
 import { describe, expect, it } from "bun:test";
-import { Tenant } from "./domain/entities/tenant.entity";
-import { ApiKey } from "./domain/value-objects/api-key.vo";
-import { Password } from "./domain/value-objects/password.vo";
-import { TenantNameInvalidError } from "./domain/errors/tenant-name-invalid.error";
-import { TenantEmailInvalidError } from "./domain/errors/tenant-email-invalid.error";
-import { TenantEmailExistsError } from "./domain/errors/tenant-email-exists.error";
+import { NotFoundError } from "../shared/errors/not-found-error";
+import type { DomainEvent } from "../shared/events";
+import type { IEventDispatcher } from "../shared/ports";
 import { CreateTenantUseCase } from "./application/use-cases/create-tenant.use-case";
+import { DeleteTenantUsecase } from "./application/use-cases/delete-tenant.use-case";
 import { FindByIdTenantUsecase } from "./application/use-cases/get-tenant.use-case";
 import { ListTenantUsecase } from "./application/use-cases/list-tenant.use-case";
-import { DeleteTenantUsecase } from "./application/use-cases/delete-tenant.use-case";
+import { Tenant } from "./domain/entities/tenant.entity";
+import { TenantEmailExistsError } from "./domain/errors/tenant-email-exists.error";
+import { TenantEmailInvalidError } from "./domain/errors/tenant-email-invalid.error";
+import { TenantNameInvalidError } from "./domain/errors/tenant-name-invalid.error";
 import type { ITenantRepository } from "./domain/repositories/tenant-repository.interface";
-import type { IEventDispatcher } from "../shared/ports";
-import type { DomainEvent } from "../shared/events";
+import { Password } from "./domain/value-objects/password.vo";
+import { createTenantSchema } from "./infrastructure/http/tenant.validator";
 import { TenantMapper } from "./infrastructure/mappers/tenant.mapper";
-import {
-  createTenantSchema,
-} from "./infrastructure/http/tenant.validator";
-import { NotFoundError } from "../shared/errors/not-found-error";
 
 class MockTenantRepository implements ITenantRepository {
   public tenants: Map<string, Tenant> = new Map();

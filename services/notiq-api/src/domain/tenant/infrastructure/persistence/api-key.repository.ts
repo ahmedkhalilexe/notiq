@@ -1,7 +1,10 @@
 import type { Knex } from "knex";
-import type { IApiKeyRepository } from "../../domain/repositories/api-key-repository.interface";
 import type { ApiKeyEntity } from "../../domain/entities/api-key.entity";
-import { ApiKeyMapper, type ApiKeyPersistence } from "../mappers/api-key.mapper";
+import type { IApiKeyRepository } from "../../domain/repositories/api-key-repository.interface";
+import {
+  ApiKeyMapper,
+  type ApiKeyPersistence,
+} from "../mappers/api-key.mapper";
 
 export class ApiKeyRepository implements IApiKeyRepository {
   public constructor(private readonly db: Knex) {}
@@ -19,13 +22,11 @@ export class ApiKeyRepository implements IApiKeyRepository {
   }
 
   async update(apiKey: ApiKeyEntity): Promise<void> {
-    await this.db("tenant_api")
-      .where("id", apiKey.id)
-      .update({
-        name: apiKey.name,
-        revoked_at: apiKey.revokedAt,
-        updated_at: new Date(),
-      });
+    await this.db("tenant_api").where("id", apiKey.id).update({
+      name: apiKey.name,
+      revoked_at: apiKey.revokedAt,
+      updated_at: new Date(),
+    });
   }
 
   async findById(id: string): Promise<ApiKeyEntity | null> {

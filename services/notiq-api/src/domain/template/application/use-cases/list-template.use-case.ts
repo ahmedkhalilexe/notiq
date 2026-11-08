@@ -1,5 +1,5 @@
 import type { IEventDispatcher } from "../../../shared/ports";
-import { Template } from "../../domain/entities/template.entity";
+import type { Template } from "../../domain/entities/template.entity";
 import type { ITemplateRepository } from "../../domain/repositories/template-repository.interface";
 import type { ListTemplateDTO } from "../dtos/list-template.dto";
 

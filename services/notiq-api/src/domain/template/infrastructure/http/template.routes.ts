@@ -1,6 +1,6 @@
 import { Router } from "express";
-import type { TemplateController } from "./template.controller";
 import { asyncHandler } from "../../../../infra/http/middleware/async-handler";
+import type { TemplateController } from "./template.controller";
 
 export function createTemplateRoutes(controller: TemplateController): Router {
   const router = Router();

@@ -1,9 +1,9 @@
-import type { IEventDispatcher } from "../../../shared/ports";
 import { NotFoundError } from "../../../shared/errors/not-found-error";
-import type { ITenantRepository } from "../../domain/repositories/tenant-repository.interface";
-import type { IApiKeyRepository } from "../../domain/repositories/api-key-repository.interface";
-import { ApiKey } from "../../domain/value-objects/api-key.vo";
+import type { IEventDispatcher } from "../../../shared/ports";
 import { ApiKeyEntity } from "../../domain/entities/api-key.entity";
+import type { IApiKeyRepository } from "../../domain/repositories/api-key-repository.interface";
+import type { ITenantRepository } from "../../domain/repositories/tenant-repository.interface";
+import { ApiKey } from "../../domain/value-objects/api-key.vo";
 import type { CreateApiKeyDTO } from "../dtos/create-api-key.dto";
 
 export interface CreateApiKeyResult {

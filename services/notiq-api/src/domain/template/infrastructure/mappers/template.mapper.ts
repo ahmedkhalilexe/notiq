@@ -26,8 +26,8 @@ export interface TemplateResponseDTO {
   deleted_at: Date | null;
 }
 
-export class TemplateMapper {
-  static toDomain(raw: TemplatePersistence): Template {
+export const TemplateMapper = {
+  toDomain(raw: TemplatePersistence): Template {
     const templateChannel = TemplateChannel.create(raw.channel);
     const templateBody = TemplateBody.create(raw.body);
     const templateVariables = (raw.variables ?? []).map((v) => {
@@ -44,9 +44,9 @@ export class TemplateMapper {
       new Date(raw.created_at),
       raw.deleted_at ? new Date(raw.deleted_at) : null,
     );
-  }
+  },
 
-  static toPersistence(template: Template) {
+  toPersistence(template: Template) {
     return {
       id: template.id,
       tenant_id: template.tenantId,
@@ -57,9 +57,9 @@ export class TemplateMapper {
       created_at: template.createdAt,
       deleted_at: template.deletedAt,
     };
-  }
+  },
 
-  static toResponse(template: Template): TemplateResponseDTO {
+  toResponse(template: Template): TemplateResponseDTO {
     return {
       id: template.id,
       name: template.name,
@@ -73,5 +73,5 @@ export class TemplateMapper {
       created_at: template.createdAt,
       deleted_at: template.deletedAt,
     };
-  }
-}
+  },
+};

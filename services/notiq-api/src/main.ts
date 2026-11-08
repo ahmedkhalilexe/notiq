@@ -12,7 +12,10 @@ const PORT = process.env.PORT ?? 3000;
 async function retry<T>(
   label: string,
   fn: () => Promise<T>,
-  { retries = 10, delayMs = 3_000 }: { retries?: number; delayMs?: number } = {}
+  {
+    retries = 10,
+    delayMs = 3_000,
+  }: { retries?: number; delayMs?: number } = {},
 ): Promise<T> {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
@@ -21,7 +24,7 @@ async function retry<T>(
       const isLast = attempt === retries;
       console.warn(
         `[retry] ${label} failed (attempt ${attempt}/${retries}):`,
-        (err as Error).message
+        (err as Error).message,
       );
       if (isLast) throw err;
       await new Promise((res) => setTimeout(res, delayMs));

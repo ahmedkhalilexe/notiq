@@ -1,6 +1,6 @@
-import { Router, type RequestHandler } from "express";
-import type { TenantController } from "./tenant.controller";
+import { type RequestHandler, Router } from "express";
 import { asyncHandler } from "../../../../infra/http/middleware/async-handler";
+import type { TenantController } from "./tenant.controller";
 
 export function createTenantRoutes(
   controller: TenantController,

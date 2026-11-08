@@ -1,6 +1,7 @@
 // infra/database/connection.ts
-import { knex, Knex } from "knex";
-import path from "path";
+
+import path from "node:path";
+import { type Knex, knex } from "knex";
 
 export type DbConnection = Knex;
 export const db = knex({

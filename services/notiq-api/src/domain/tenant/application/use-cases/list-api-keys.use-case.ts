@@ -1,7 +1,7 @@
 import { NotFoundError } from "../../../shared/errors/not-found-error";
-import type { ITenantRepository } from "../../domain/repositories/tenant-repository.interface";
-import type { IApiKeyRepository } from "../../domain/repositories/api-key-repository.interface";
 import type { ApiKeyEntity } from "../../domain/entities/api-key.entity";
+import type { IApiKeyRepository } from "../../domain/repositories/api-key-repository.interface";
+import type { ITenantRepository } from "../../domain/repositories/tenant-repository.interface";
 import type { ListApiKeysDTO } from "../dtos/list-api-keys.dto";
 
 export class ListApiKeysUseCase {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import jwt from "jsonwebtoken";
-import { TokenService } from "./token.service";
 import { UnauthorizedError } from "../../domain/shared/errors/unauthorized-error";
+import { TokenService } from "./token.service";
 
 const SECRET = "a".repeat(32);
 const TENANT_ID = "11111111-1111-4111-8111-111111111111";

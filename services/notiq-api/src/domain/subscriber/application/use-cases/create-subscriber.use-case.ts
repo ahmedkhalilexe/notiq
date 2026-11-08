@@ -35,7 +35,11 @@ export class CreateSubscriberUseCase {
     }
 
     const channels = dto.channels?.map((ch) =>
-      SubscriberChannelPreference.create(ch.channel, ch.enabled ?? true, ch.value),
+      SubscriberChannelPreference.create(
+        ch.channel,
+        ch.enabled ?? true,
+        ch.value,
+      ),
     );
 
     const subscriber = Subscriber.create({

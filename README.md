@@ -81,16 +81,16 @@ flowchart TD
 
 ## 🛠 Tech Stack
 
-| Component | Technology | Purpose |
-| :--- | :--- | :--- |
-| **Runtime** | [Bun](https://bun.sh/) | Fast all-in-one JavaScript runtime & package manager |
-| **Language** | [TypeScript](https://www.typescriptlang.org/) | Type safety across domain entities & API contracts |
-| **API Framework** | [Express.js](https://expressjs.com/) | REST API server with custom async route handlers |
-| **Database** | [PostgreSQL 16](https://www.postgresql.org/) | Relational store for tenants, templates, subscribers, and logs |
-| **Migration Tool** | [Knex.js](https://knexjs.org/) | Schema migrations and query builder |
-| **Message Broker** | [RabbitMQ 3](https://www.rabbitmq.com/) | Reliable AMQP queue for asynchronous message processing |
-| **Cache & Lock** | [Redis 7](https://redis.io/) | Fast cache and rate-limiting store |
-| **Containerization** | [Docker Compose](https://www.docker.com/) | Local multi-container development environment |
+| Component            | Technology                                    | Purpose                                                        |
+| :------------------- | :-------------------------------------------- | :------------------------------------------------------------- |
+| **Runtime**          | [Bun](https://bun.sh/)                        | Fast all-in-one JavaScript runtime & package manager           |
+| **Language**         | [TypeScript](https://www.typescriptlang.org/) | Type safety across domain entities & API contracts             |
+| **API Framework**    | [Express.js](https://expressjs.com/)          | REST API server with custom async route handlers               |
+| **Database**         | [PostgreSQL 16](https://www.postgresql.org/)  | Relational store for tenants, templates, subscribers, and logs |
+| **Migration Tool**   | [Knex.js](https://knexjs.org/)                | Schema migrations and query builder                            |
+| **Message Broker**   | [RabbitMQ 3](https://www.rabbitmq.com/)       | Reliable AMQP queue for asynchronous message processing        |
+| **Cache & Lock**     | [Redis 7](https://redis.io/)                  | Fast cache and rate-limiting store                             |
+| **Containerization** | [Docker Compose](https://www.docker.com/)     | Local multi-container development environment                  |
 
 ---
 
@@ -99,27 +99,29 @@ flowchart TD
 Notiq is structured as a light monorepo separated into microservices under the [`./services`](./services) directory:
 
 ### 1. `notiq-api` ([`./services/notiq-api`](./services/notiq-api))
+
 The synchronous HTTP API handling tenant operations, template management, subscriber preferences, and notification dispatch requests.
 
-* **Architecture Pattern**: Clean Architecture / Domain-Driven Design (DDD).
-  * **Domain Layer** ([`./services/notiq-api/src/domain`](./services/notiq-api/src/domain)): Aggregates, Entities, Value Objects, Domain Events, and Repository Interfaces.
-  * **Application Layer**: Use Cases and DTOs.
-  * **Infrastructure Layer** ([`./services/notiq-api/src/infra`](./services/notiq-api/src/infra)): Database Repositories (Knex), HTTP Controllers, Route Definitions, Middlewares, and RabbitMQ Producers.
-* **Responsibilities**:
-  * Tenant signup, authentication, and API key generation.
-  * CRUD for subscribers and channel routing preferences.
-  * Template management with variable placeholder definition.
-  * Validating & enqueueing notification jobs to RabbitMQ.
+- **Architecture Pattern**: Clean Architecture / Domain-Driven Design (DDD).
+  - **Domain Layer** ([`./services/notiq-api/src/domain`](./services/notiq-api/src/domain)): Aggregates, Entities, Value Objects, Domain Events, and Repository Interfaces.
+  - **Application Layer**: Use Cases and DTOs.
+  - **Infrastructure Layer** ([`./services/notiq-api/src/infra`](./services/notiq-api/src/infra)): Database Repositories (Knex), HTTP Controllers, Route Definitions, Middlewares, and RabbitMQ Producers.
+- **Responsibilities**:
+  - Tenant signup, authentication, and API key generation.
+  - CRUD for subscribers and channel routing preferences.
+  - Template management with variable placeholder definition.
+  - Validating & enqueueing notification jobs to RabbitMQ.
 
 ### 2. `notiq-worker` ([`./services/notiq-worker`](./services/notiq-worker))
+
 The asynchronous background worker service responsible for consuming notification jobs from RabbitMQ and executing delivery.
 
-* **Responsibilities**:
-  * Consuming messages from channel-specific queues (`email_queue`, `in_app_queue`, `sms_queue`).
-  * Rendering message templates with provided payload variables.
-  * Dispatching messages via provider adapters.
-  * Recording delivery status updates and logs into PostgreSQL (`notifications_log`).
-  * Routing unrecoverable failures to the Dead Letter Queue (`DLQ`).
+- **Responsibilities**:
+  - Consuming messages from channel-specific queues (`email_queue`, `in_app_queue`, `sms_queue`).
+  - Rendering message templates with provided payload variables.
+  - Dispatching messages via provider adapters.
+  - Recording delivery status updates and logs into PostgreSQL (`notifications_log`).
+  - Routing unrecoverable failures to the Dead Letter Queue (`DLQ`).
 
 ---
 
@@ -182,38 +184,45 @@ The database schema enforces multi-tenant data isolation, template versioning, s
 ## 📡 API Specification & System Design
 
 ### 🔑 Authentication & Tenants
+
 Management routes (tenant, API keys, subscribers, templates) are authenticated with a **JWT** sent as `Authorization: Bearer <token>`. The JWT middleware verifies the token (HS256, `sub` = tenant id), loads the tenant (so deleted tenants are rejected immediately), and attaches `req.tenant` / `req.tenantId`. Controllers use only that tenant context; tenant ids are never read from headers, params, query or body. Cross-tenant access returns `404`.
 
 Configuration: `JWT_SECRET` (required, at least 32 characters; the API refuses to start without it) and `JWT_EXPIRES_IN` (default `1h`).
 
-* `POST /v1/api/tenants` - Create a tenant. **Public** (stand-in for signup).
-* `GET /v1/api/tenants/me` - Current tenant (from token).
-* `DELETE /v1/api/tenants/me` - Soft delete the current tenant.
-* `POST /v1/api/auth/register`, `POST /v1/api/auth/login` - **Not implemented yet.** Until login exists there is no endpoint that issues tokens. Refresh tokens are not implemented either.
+- `POST /v1/api/tenants` - Create a tenant. **Public** (stand-in for signup).
+- `GET /v1/api/tenants/me` - Current tenant (from token).
+- `DELETE /v1/api/tenants/me` - Soft delete the current tenant.
+- `POST /v1/api/auth/register`, `POST /v1/api/auth/login` - **Not implemented yet.** Until login exists there is no endpoint that issues tokens. Refresh tokens are not implemented either.
 
 ### 🔐 API Key Management
+
 API keys are decoupled from tenant creation and support a complete lifecycle (**Create ➔ List ➔ Revoke**). All routes require a JWT and act on the token's tenant:
-* `POST /v1/api/api-keys` - Generate a new named API key (`{ "name": "Production" }`). Plaintext key (`ntk_<32 hex chars>`) is returned **only once**.
-* `GET /v1/api/api-keys` - List the tenant's API keys (`id`, `name`, `status`, `created_at`, `revoked_at`). Plaintext keys and hashes are never exposed.
-* `DELETE /v1/api/api-keys/:keyId` - Revoke an API key.
-* **`apiValidator` middleware** (`X-API-KEY` header, SHA-256 hash lookup in `tenant_api`) is reserved for the future notification-trigger route and is not mounted on the management routes.
+
+- `POST /v1/api/api-keys` - Generate a new named API key (`{ "name": "Production" }`). Plaintext key (`ntk_<32 hex chars>`) is returned **only once**.
+- `GET /v1/api/api-keys` - List the tenant's API keys (`id`, `name`, `status`, `created_at`, `revoked_at`). Plaintext keys and hashes are never exposed.
+- `DELETE /v1/api/api-keys/:keyId` - Revoke an API key.
+- **`apiValidator` middleware** (`X-API-KEY` header, SHA-256 hash lookup in `tenant_api`) is reserved for the future notification-trigger route and is not mounted on the management routes.
 
 ### 👤 Subscribers
-* `POST /v1/api/subscribers` - Create subscriber with channel preferences (e.g. `{ email: "user@example.com", in_app: true }`).
-* `GET /v1/api/subscribers` - List subscribers per tenant.
-* `GET /v1/api/subscribers/:id` - Get subscriber profile & channels.
-* `PATCH /v1/api/subscribers/:id` - Update subscriber details/channels.
-* `DELETE /v1/api/subscribers/:id` - Remove subscriber.
+
+- `POST /v1/api/subscribers` - Create subscriber with channel preferences (e.g. `{ email: "user@example.com", in_app: true }`).
+- `GET /v1/api/subscribers` - List subscribers per tenant.
+- `GET /v1/api/subscribers/:id` - Get subscriber profile & channels.
+- `PATCH /v1/api/subscribers/:id` - Update subscriber details/channels.
+- `DELETE /v1/api/subscribers/:id` - Remove subscriber.
 
 ### 📑 Templates
-* `POST /v1/api/templates` - Create notification template with subject and body variables.
-* `GET /v1/api/templates` - List templates filtered by channel (`email`, `in_app`, `sms`).
-* `GET /v1/api/templates/:id` - Get template definition.
-* `PATCH /v1/api/templates/:id` - Update template subject/body/variables.
-* `DELETE /v1/api/templates/:id` - Delete template.
+
+- `POST /v1/api/templates` - Create notification template with subject and body variables.
+- `GET /v1/api/templates` - List templates filtered by channel (`email`, `in_app`, `sms`).
+- `GET /v1/api/templates/:id` - Get template definition.
+- `PATCH /v1/api/templates/:id` - Update template subject/body/variables.
+- `DELETE /v1/api/templates/:id` - Delete template.
 
 ### 🚀 Notifications (Async Dispatch)
-* `POST /v1/api/notifications` - Send notification request.
+
+- `POST /v1/api/notifications` - Send notification request.
+
   ```json
   {
     "subscriber_id": "uuid",
@@ -225,43 +234,52 @@ API keys are decoupled from tenant creation and support a complete lifecycle (**
     }
   }
   ```
+
   **Response**: `202 Accepted`
+
   ```json
   {
     "notification_id": "uuid",
     "status": "queued"
   }
   ```
-* `GET /v1/api/notifications` - Query notification delivery history & pagination.
-* `GET /v1/api/notifications/:id` - Retrieve delivery logs & current status for a notification.
+- `GET /v1/api/notifications` - Query notification delivery history & pagination.
+- `GET /v1/api/notifications/:id` - Retrieve delivery logs & current status for a notification.
 
 ---
 
 ## 🚀 Getting Started & Local Development
 
 ### Prerequisites
-* [Bun](https://bun.sh/) (v1.3+ recommended)
-* [Docker & Docker Compose](https://www.docker.com/)
+
+- [Bun](https://bun.sh/) (v1.3+ recommended)
+- [Docker & Docker Compose](https://www.docker.com/)
 
 ### 1. Environment Setup
+
 Copy the example environment file and update credentials if needed:
+
 ```bash
 cp .env.example .env
 ```
 
 ### 2. Start Infrastructure Services
+
 Boot PostgreSQL, RabbitMQ, and Redis using Docker Compose:
+
 ```bash
 docker-compose up -d postgres rabbitmq redis
 ```
 
-* **PostgreSQL**: `localhost:5432`
-* **RabbitMQ AMQP**: `localhost:5672`
-* **RabbitMQ Management Dashboard**: [http://localhost:15672](http://localhost:15672) (User & Password configured in `.env`)
-* **Redis**: `localhost:6379`
+- **PostgreSQL**: `localhost:5432`
+- **RabbitMQ AMQP**: `localhost:5672`
+- **RabbitMQ Management Dashboard**: [http://localhost:15672](http://localhost:15672) (User & Password configured in `.env`)
+- **Redis**: `localhost:6379`
 
 ### 3. Run Database Migrations
+
 Migrations are managed in `notiq-api`. Run migrations against Postgres:
+
 ```bash
 cd services/notiq-api
 bun run knex migrate:latest --knexfile knexfile.ts
@@ -270,20 +288,24 @@ bun run knex migrate:latest --knexfile knexfile.ts
 ### 4. Running Services Locally
 
 #### Start `notiq-api` (Dev mode with auto-reload)
+
 ```bash
 cd services/notiq-api
 bun dev
 ```
-*API will run on [http://localhost:3000](http://localhost:3000)*
+_API will run on [http://localhost:3000](http://localhost:3000)_
 
 #### Start `notiq-worker` (Dev mode with auto-reload)
+
 ```bash
 cd services/notiq-worker
 bun dev
 ```
 
 #### Run All Services via Docker Compose
+
 To build and run the entire stack (API, Worker, DB, Queue) inside containers:
+
 ```bash
 docker-compose up --build
 ```

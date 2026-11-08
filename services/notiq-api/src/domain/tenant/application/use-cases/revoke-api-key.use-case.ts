@@ -1,7 +1,7 @@
 import type { IEventDispatcher } from "../../../shared/ports";
-import type { IApiKeyRepository } from "../../domain/repositories/api-key-repository.interface";
-import { ApiKeyNotFoundError } from "../../domain/errors/api-key-not-found.error";
 import type { ApiKeyEntity } from "../../domain/entities/api-key.entity";
+import { ApiKeyNotFoundError } from "../../domain/errors/api-key-not-found.error";
+import type { IApiKeyRepository } from "../../domain/repositories/api-key-repository.interface";
 import type { RevokeApiKeyDTO } from "../dtos/revoke-api-key.dto";
 
 export class RevokeApiKeyUseCase {

@@ -1,6 +1,7 @@
 // infra/database/connection.ts
+
+import path from "node:path";
 import knex from "knex";
-import path from "path";
 export const db = knex({
   client: "pg",
   connection: process.env.DATABASE_URL,

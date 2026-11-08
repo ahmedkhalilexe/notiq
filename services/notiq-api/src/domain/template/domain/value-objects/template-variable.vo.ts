@@ -10,7 +10,7 @@ export class TemplateVariable {
 
   static create(key: string, required: boolean): TemplateVariable {
     if (!key) throw new TemplateVariableKeyInvalidError();
-    if (key.trim().length === 0 || key.length > this.MAX_KEY_LENGTH)
+    if (key.trim().length === 0 || key.length > TemplateVariable.MAX_KEY_LENGTH)
       throw new TemplateVariableKeyInvalidError();
     if (key.includes("__") || key.endsWith("_"))
       throw new TemplateVariableKeyInvalidError();

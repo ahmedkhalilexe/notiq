@@ -106,7 +106,7 @@ export class TemplateRepository implements ITemplateRepository {
       if (!variablesMap.has(v.template_id)) {
         variablesMap.set(v.template_id, []);
       }
-      variablesMap.get(v.template_id)!.push({
+      variablesMap.get(v.template_id)?.push({
         key: v.key,
         required: v.required,
       });

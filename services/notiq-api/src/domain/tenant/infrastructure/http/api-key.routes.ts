@@ -1,6 +1,6 @@
 import { Router } from "express";
-import type { ApiKeyController } from "./api-key.controller";
 import { asyncHandler } from "../../../../infra/http/middleware/async-handler";
+import type { ApiKeyController } from "./api-key.controller";
 
 export function createApiKeyRoutes(controller: ApiKeyController): Router {
   const router = Router();

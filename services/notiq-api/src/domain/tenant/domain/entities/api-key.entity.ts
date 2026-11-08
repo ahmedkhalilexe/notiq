@@ -63,14 +63,7 @@ export class ApiKeyEntity {
     createdAt: Date,
     revokedAt: Date | null,
   ): ApiKeyEntity {
-    return new ApiKeyEntity(
-      id,
-      tenantId,
-      keyHash,
-      name,
-      createdAt,
-      revokedAt,
-    );
+    return new ApiKeyEntity(id, tenantId, keyHash, name, createdAt, revokedAt);
   }
 
   get isRevoked(): boolean {

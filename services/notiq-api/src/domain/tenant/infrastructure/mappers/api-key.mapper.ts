@@ -24,8 +24,8 @@ export interface ApiKeyCreatedResponseDTO {
   key_details: ApiKeyResponseDTO;
 }
 
-export class ApiKeyMapper {
-  static toDomain(raw: ApiKeyPersistence): ApiKeyEntity {
+export const ApiKeyMapper = {
+  toDomain(raw: ApiKeyPersistence): ApiKeyEntity {
     return ApiKeyEntity.reconstitute(
       raw.id,
       raw.tenant_id,
@@ -34,9 +34,9 @@ export class ApiKeyMapper {
       new Date(raw.created_at),
       raw.revoked_at ? new Date(raw.revoked_at) : null,
     );
-  }
+  },
 
-  static toPersistence(entity: ApiKeyEntity): ApiKeyPersistence {
+  toPersistence(entity: ApiKeyEntity): ApiKeyPersistence {
     return {
       id: entity.id,
       tenant_id: entity.tenantId,
@@ -45,9 +45,9 @@ export class ApiKeyMapper {
       created_at: entity.createdAt,
       revoked_at: entity.revokedAt,
     };
-  }
+  },
 
-  static toResponse(entity: ApiKeyEntity): ApiKeyResponseDTO {
+  toResponse(entity: ApiKeyEntity): ApiKeyResponseDTO {
     return {
       id: entity.id,
       tenant_id: entity.tenantId,
@@ -56,5 +56,5 @@ export class ApiKeyMapper {
       created_at: entity.createdAt,
       revoked_at: entity.revokedAt,
     };
-  }
-}
+  },
+};
