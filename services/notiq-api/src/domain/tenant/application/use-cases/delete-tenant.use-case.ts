@@ -23,7 +23,7 @@ export class DeleteTenantUsecase {
     tenant.delete();
     await this.tenantRepository.update(tenant);
 
-    this.eventDispatcher.dispatch(tenant.events);
+    await this.eventDispatcher.dispatch(tenant.events);
     tenant.clearEvents();
   }
 }

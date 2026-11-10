@@ -87,4 +87,18 @@ describe("jwtAuth middleware", () => {
   it("getTenantId throws when no tenant is attached", () => {
     expect(() => getTenantId({} as Request)).toThrow(UnauthorizedError);
   });
+
+  it("passes a tenant lookup failure through instead of masking it as 401", async () => {
+    const boom = new Error("connection refused");
+    const repo = {
+      findById: async () => {
+        throw boom;
+      },
+    } as unknown as ITenantRepository;
+    const middleware = createJwtAuth(tokens, new FindByIdTenantUsecase(repo));
+    const token = tokens.sign({ tenantId: crypto.randomUUID() });
+
+    const { error } = await run(middleware, `Bearer ${token}`);
+    expect(error).toBe(boom);
+  });
 });

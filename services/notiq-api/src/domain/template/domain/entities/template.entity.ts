@@ -1,3 +1,4 @@
+import { ConflictError } from "../../../shared/errors/conflict-error";
 import type { DomainEvent } from "../../../shared/events";
 import { TemplateNameInvalidError } from "../errors/template-name-invalid.error";
 import { TemplateSubjectInvalidError } from "../errors/template-subject-invalid.error";
@@ -41,6 +42,8 @@ export class Template {
     if (trimmedSubject.length < 2 || trimmedSubject.length > 100) {
       throw new TemplateSubjectInvalidError();
     }
+
+    Template.assertUniqueVariableKeys(variables);
 
     const id = crypto.randomUUID();
 
@@ -93,7 +96,7 @@ export class Template {
     variables?: TemplateVariable[];
   }): void {
     if (this._deletedAt != null) {
-      throw new Error("Cannot update a deleted template");
+      throw new ConflictError("Cannot update a deleted template");
     }
 
     if (params.name !== undefined) {
@@ -121,13 +124,7 @@ export class Template {
     }
 
     if (params.variables !== undefined) {
-      const seen = new Set<string>();
-      for (const v of params.variables) {
-        if (seen.has(v.key)) {
-          throw new TemplateVariableExistsError();
-        }
-        seen.add(v.key);
-      }
+      Template.assertUniqueVariableKeys(params.variables);
       this.variables = [...params.variables];
     }
 
@@ -136,12 +133,22 @@ export class Template {
 
   public delete(): void {
     if (this.deletedAt != null) {
-      throw Error("template already deleted");
+      throw new ConflictError("template already deleted");
     }
 
     this._deletedAt = new Date();
 
     this._events.push(new TemplateDeletedEvent(this.id, this._deletedAt));
+  }
+
+  private static assertUniqueVariableKeys(variables: TemplateVariable[]): void {
+    const seen = new Set<string>();
+    for (const v of variables) {
+      if (seen.has(v.key)) {
+        throw new TemplateVariableExistsError();
+      }
+      seen.add(v.key);
+    }
   }
 
   addVariable(variable: TemplateVariable): void {

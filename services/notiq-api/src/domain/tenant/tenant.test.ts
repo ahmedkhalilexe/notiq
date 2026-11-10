@@ -5,13 +5,15 @@ import type { IEventDispatcher } from "../shared/ports";
 import { CreateTenantUseCase } from "./application/use-cases/create-tenant.use-case";
 import { DeleteTenantUsecase } from "./application/use-cases/delete-tenant.use-case";
 import { FindByIdTenantUsecase } from "./application/use-cases/get-tenant.use-case";
-import { ListTenantUsecase } from "./application/use-cases/list-tenant.use-case";
+import { LoginTenantUseCase } from "./application/use-cases/login-tenant.use-case";
 import { Tenant } from "./domain/entities/tenant.entity";
+import { InvalidCredentialsError } from "./domain/errors/invalid-credentials.error";
 import { TenantEmailExistsError } from "./domain/errors/tenant-email-exists.error";
 import { TenantEmailInvalidError } from "./domain/errors/tenant-email-invalid.error";
 import { TenantNameInvalidError } from "./domain/errors/tenant-name-invalid.error";
 import type { ITenantRepository } from "./domain/repositories/tenant-repository.interface";
 import { Password } from "./domain/value-objects/password.vo";
+import { loginSchema } from "./infrastructure/http/auth.validator";
 import { createTenantSchema } from "./infrastructure/http/tenant.validator";
 import { TenantMapper } from "./infrastructure/mappers/tenant.mapper";
 
@@ -39,18 +41,6 @@ class MockTenantRepository implements ITenantRepository {
         return t;
       }
     }
-    return null;
-  }
-
-  async list(page: number, limit: number): Promise<Tenant[]> {
-    const active = Array.from(this.tenants.values()).filter(
-      (t) => t.deletedAt === null,
-    );
-    const offset = Math.max(0, (page - 1) * limit);
-    return active.slice(offset, offset + limit);
-  }
-
-  async findByApiKey(_apiKey: string): Promise<Tenant | null> {
     return null;
   }
 }
@@ -193,33 +183,6 @@ describe("Tenant Application Use Cases", () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  it("ListTenantUsecase should paginate and exclude soft-deleted tenants", async () => {
-    const repo = new MockTenantRepository();
-    const dispatcher = new MockEventDispatcher();
-    const createUseCase = new CreateTenantUseCase(repo, dispatcher);
-    const listUseCase = new ListTenantUsecase(repo);
-    const deleteUseCase = new DeleteTenantUsecase(repo, dispatcher);
-
-    const t1 = await createUseCase.execute({
-      name: "Tenant 1",
-      email: "t1@example.com",
-      password: "Password123!",
-    });
-    await createUseCase.execute({
-      name: "Tenant 2",
-      email: "t2@example.com",
-      password: "Password123!",
-    });
-
-    const page1 = await listUseCase.execute({ page: 1, limit: 1 });
-    expect(page1.length).toBe(1);
-
-    await deleteUseCase.execute(t1.id);
-    const remaining = await listUseCase.execute({ page: 1, limit: 10 });
-    expect(remaining.length).toBe(1);
-    expect(remaining[0]?.id).not.toBe(t1.id);
-  });
-
   it("DeleteTenantUsecase should soft delete tenant", async () => {
     const repo = new MockTenantRepository();
     const dispatcher = new MockEventDispatcher();
@@ -275,5 +238,72 @@ describe("TenantMapper & Validator", () => {
     const weakPassword = { ...valid, password: "weak" };
     const { error: passErr } = createTenantSchema.validate(weakPassword);
     expect(passErr).toBeDefined();
+  });
+});
+
+describe("Tenant login", () => {
+  async function setup() {
+    const repo = new MockTenantRepository();
+    const dispatcher = new MockEventDispatcher();
+    const tenant = await new CreateTenantUseCase(repo, dispatcher).execute({
+      name: "Login Co",
+      email: "login@example.com",
+      password: "Password123!",
+    });
+    return { repo, dispatcher, tenant, login: new LoginTenantUseCase(repo) };
+  }
+
+  it("returns the tenant for the correct email and password", async () => {
+    const { login, tenant } = await setup();
+    const result = await login.execute({
+      email: "Login@Example.com ",
+      password: "Password123!",
+    });
+    expect(result.id).toBe(tenant.id);
+  });
+
+  it("rejects a wrong password and an unknown email with the same error", async () => {
+    const { login } = await setup();
+
+    const wrongPassword = await login
+      .execute({ email: "login@example.com", password: "nope" })
+      .catch((e) => e);
+    const unknownEmail = await login
+      .execute({ email: "nobody@example.com", password: "Password123!" })
+      .catch((e) => e);
+
+    expect(wrongPassword).toBeInstanceOf(InvalidCredentialsError);
+    expect(unknownEmail).toBeInstanceOf(InvalidCredentialsError);
+    expect(wrongPassword.message).toBe(unknownEmail.message);
+    expect(wrongPassword.statusCode).toBe(401);
+  });
+
+  it("rejects a deleted tenant", async () => {
+    const { login, repo, dispatcher, tenant } = await setup();
+    await new DeleteTenantUsecase(repo, dispatcher).execute(tenant.id);
+
+    expect(
+      login.execute({ email: "login@example.com", password: "Password123!" }),
+    ).rejects.toThrow(InvalidCredentialsError);
+  });
+
+  it("loginSchema requires both fields", () => {
+    expect(loginSchema.validate({}).error).toBeDefined();
+    expect(loginSchema.validate({ email: "a@b.co" }).error).toBeDefined();
+    expect(
+      loginSchema.validate({ email: "a@b.co", password: "x" }).error,
+    ).toBeUndefined();
+  });
+});
+
+describe("Tenant normalisation", () => {
+  it("stores the trimmed name and lowercased email", () => {
+    const tenant = Tenant.create({
+      name: "  Acme  ",
+      email: " Admin@Acme.COM ",
+      password: Password.create("hashed"),
+    });
+    expect(tenant.name).toBe("Acme");
+    expect(tenant.email).toBe("admin@acme.com");
   });
 });

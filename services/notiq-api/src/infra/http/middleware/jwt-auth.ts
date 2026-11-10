@@ -1,4 +1,5 @@
 import type { NextFunction, Request, RequestHandler, Response } from "express";
+import { NotFoundError } from "../../../domain/shared/errors/not-found-error";
 import { UnauthorizedError } from "../../../domain/shared/errors/unauthorized-error";
 import type { FindByIdTenantUsecase } from "../../../domain/tenant/application/use-cases/get-tenant.use-case";
 import type { Tenant } from "../../../domain/tenant/domain/entities/tenant.entity";
@@ -37,8 +38,13 @@ export function createJwtAuth(
       let tenant: Tenant;
       try {
         tenant = await findTenant.execute({ id: tenantId });
-      } catch {
-        throw new UnauthorizedError(INVALID_MESSAGE);
+      } catch (err) {
+        // Only a missing tenant means a bad token; a database failure must
+        // surface as a server error, not as "your token is invalid".
+        if (err instanceof NotFoundError) {
+          throw new UnauthorizedError(INVALID_MESSAGE);
+        }
+        throw err;
       }
 
       req.tenant = tenant;

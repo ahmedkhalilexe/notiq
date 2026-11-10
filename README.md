@@ -117,7 +117,7 @@ The synchronous HTTP API handling tenant operations, template management, subscr
 The asynchronous background worker service responsible for consuming notification jobs from RabbitMQ and executing delivery.
 
 - **Responsibilities**:
-  - Consuming messages from channel-specific queues (`email_queue`, `in_app_queue`, `sms_queue`).
+  - Consuming messages from channel-specific queues (`email.queue`, `in_app.queue`, `sms.queue`).
   - Rendering message templates with provided payload variables.
   - Dispatching messages via provider adapters.
   - Recording delivery status updates and logs into PostgreSQL (`notifications_log`).
@@ -189,10 +189,11 @@ Management routes (tenant, API keys, subscribers, templates) are authenticated w
 
 Configuration: `JWT_SECRET` (required, at least 32 characters; the API refuses to start without it) and `JWT_EXPIRES_IN` (default `1h`).
 
-- `POST /v1/api/tenants` - Create a tenant. **Public** (stand-in for signup).
+- `POST /v1/api/tenants` - Sign up: create a tenant. **Public**.
+- `POST /v1/api/auth/login` - Exchange `{ "email", "password" }` for `{ access_token, token_type, expires_in, tenant }`. **Public**. Unknown email and wrong password return the same `401 INVALID_CREDENTIALS`.
 - `GET /v1/api/tenants/me` - Current tenant (from token).
 - `DELETE /v1/api/tenants/me` - Soft delete the current tenant.
-- `POST /v1/api/auth/register`, `POST /v1/api/auth/login` - **Not implemented yet.** Until login exists there is no endpoint that issues tokens. Refresh tokens are not implemented either.
+- Refresh tokens, logout and password reset are **not implemented yet**; a token is valid until it expires or the tenant is deleted.
 
 ### 🔐 API Key Management
 
@@ -318,7 +319,7 @@ This section outlines the planned development trajectory based on the system des
 
 - [x] **Core Foundation**: Bun setup, Docker Compose environment, database connection, Knex migrations.
 - [x] **Tenant DDD Domain**: Domain Entity, Value Objects (Password, API Key), Repository, Use Cases, Controllers & Routes.
-- [ ] **Authentication & Security**: JWT Auth middleware, Tenant API Key authorization header parsing.
+- [x] **Authentication & Security**: Login, JWT Auth middleware, Tenant API Key authorization header parsing.
 - [ ] **Subscriber Domain**: Complete Subscriber CRUD, channel validation, and subscriber preference storage.
 - [ ] **Template Engine**: Template CRUD, template variable extraction, string interpolation parser.
 - [ ] **Queue Producer Integration**: RabbitMQ Exchange publisher in `notiq-api` for `POST /v1/api/notifications`.

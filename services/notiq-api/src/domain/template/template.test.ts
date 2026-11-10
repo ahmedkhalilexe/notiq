@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { NotFoundError } from "../shared/errors/not-found-error";
+import { ValidationError } from "../shared/errors/validation-error";
 import type { DomainEvent } from "../shared/events";
 import type { IEventDispatcher } from "../shared/ports";
 import { CreateTemplateUsecase } from "./application/use-cases/create-template.use-case";
@@ -256,7 +257,7 @@ describe("Template Application Use Cases", () => {
     const repo = new MockTemplateRepository();
     const dispatcher = new MockEventDispatcher();
     const createUseCase = new CreateTemplateUsecase(repo, dispatcher);
-    const listUseCase = new ListTemplateUsecase(repo, dispatcher);
+    const listUseCase = new ListTemplateUsecase(repo);
 
     await createUseCase.execute({
       tenantId: TENANT_A,
@@ -407,6 +408,44 @@ describe("TemplateMapper & Validator", () => {
     const response = TemplateMapper.toResponse(domain);
     expect(response.name).toBe("Test");
     expect(response.variables[0]?.key).toBe("var");
+  });
+
+  it("counts a repeated placeholder as one variable", async () => {
+    const useCase = new CreateTemplateUsecase(
+      new MockTemplateRepository(),
+      new MockEventDispatcher(),
+    );
+
+    const template = await useCase.execute({
+      tenantId: TENANT_A,
+      name: "Repeated",
+      channel: "sms",
+      subject: "Code",
+      body: "{{otp}} is your code. Again: {{otp}}",
+    });
+
+    expect(template.getVariables().map((v) => v.key)).toEqual(["otp"]);
+  });
+
+  it("rejects duplicate variable keys on create", () => {
+    expect(() =>
+      Template.create(
+        TENANT_A,
+        "Dup",
+        TemplateChannel.email(),
+        "Subject",
+        TemplateBody.create("body"),
+        [
+          TemplateVariable.create("a", false),
+          TemplateVariable.create("a", true),
+        ],
+      ),
+    ).toThrow(TemplateVariableExistsError);
+  });
+
+  it("raises typed validation errors from value objects", () => {
+    expect(() => TemplateBody.create("   ")).toThrow(ValidationError);
+    expect(() => TemplateChannel.create("fax")).toThrow(ValidationError);
   });
 
   it("should validate createTemplateSchema and updateTemplateSchema", () => {
