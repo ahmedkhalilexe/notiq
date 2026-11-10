@@ -1,3 +1,5 @@
+import { TemplateChannelInvalidError } from "../errors/template-channel-invalid.error";
+
 export class TemplateChannel {
   private static readonly ALLOWED = ["email", "sms", "in_app"] as const;
 
@@ -10,9 +12,7 @@ export class TemplateChannel {
     }
 
     if (!(TemplateChannel.ALLOWED as readonly string[]).includes(normalized)) {
-      throw new Error(
-        `Invalid channel: ${value}. Allowed: ${TemplateChannel.ALLOWED.join(", ")}, in-app`,
-      );
+      throw new TemplateChannelInvalidError(value, TemplateChannel.ALLOWED);
     }
     return new TemplateChannel(normalized);
   }

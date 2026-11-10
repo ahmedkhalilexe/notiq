@@ -1,105 +1,23 @@
-Default to using Bun instead of Node.js.
+# notiq-api
 
-- Use `bun <file>` instead of `node <file>` or `ts-node <file>`
-- Use `bun test` instead of `jest` or `vitest`
-- Use `bun build <file.html|file.ts|file.css>` instead of `webpack` or `esbuild`
-- Use `bun install` instead of `npm install` or `yarn install` or `pnpm install`
-- Use `bun run <script>` instead of `npm run <script>` or `yarn run <script>` or `pnpm run <script>`
-- Use `bunx <package> <command>` instead of `npx <package> <command>`
-- Bun automatically loads .env, so don't use dotenv.
+Follow the root [`CLAUDE.md`](../../CLAUDE.md); this file only adds service-specific notes.
 
-## APIs
+## Runtime
 
-- `Bun.serve()` supports WebSockets, HTTPS, and routes. Don't use `express`.
-- `bun:sqlite` for SQLite. Don't use `better-sqlite3`.
-- `Bun.redis` for Redis. Don't use `ioredis`.
-- `Bun.sql` for Postgres. Don't use `pg` or `postgres.js`.
-- `WebSocket` is built-in. Don't use `ws`.
-- Prefer `Bun.file` over `node:fs`'s readFile/writeFile
-- Bun.$`ls` instead of execa.
+- Bun is the runtime and package manager: `bun install`, `bun dev`, `bun test`, `bun run typecheck`, `bun run ci` (Biome).
+- Bun loads `.env` automatically; do not add `dotenv`.
 
-## Testing
+## Stack (do not swap for Bun built-ins)
 
-Use `bun test` to run tests.
+- HTTP: **Express 5** (`src/infra/http`), not `Bun.serve()`.
+- Database: **PostgreSQL via Knex + `pg`** (`src/infra/database`), not `Bun.sql`.
+- Broker: **RabbitMQ via `amqplib`** (`src/infra/messaging`).
+- Validation: **Joi** schemas next to each controller, run through `validate()`.
 
-```ts#index.test.ts
-import { test, expect } from "bun:test";
+## Conventions
 
-test("hello world", () => {
-  expect(1).toBe(1);
-});
-```
-
-## Frontend
-
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
-
-Server:
-
-```ts#index.ts
-import index from "./index.html"
-
-Bun.serve({
-  routes: {
-    "/": index,
-    "/api/users/:id": {
-      GET: (req) => {
-        return new Response(JSON.stringify({ id: req.params.id }));
-      },
-    },
-  },
-  // optional websocket support
-  websocket: {
-    open: (ws) => {
-      ws.send("Hello, world!");
-    },
-    message: (ws, message) => {
-      ws.send(message);
-    },
-    close: (ws) => {
-      // handle close
-    }
-  },
-  development: {
-    hmr: true,
-    console: true,
-  }
-})
-```
-
-HTML files can import .tsx, .jsx or .js files directly and Bun's bundler will transpile & bundle automatically. `<link>` tags can point to stylesheets and Bun's CSS bundler will bundle.
-
-```html#index.html
-<html>
-  <body>
-    <h1>Hello, world!</h1>
-    <script type="module" src="./frontend.tsx"></script>
-  </body>
-</html>
-```
-
-With the following `frontend.tsx`:
-
-```tsx#frontend.tsx
-import React from "react";
-import { createRoot } from "react-dom/client";
-
-// import .css files directly and it works
-import './index.css';
-
-const root = createRoot(document.body);
-
-export default function Frontend() {
-  return <h1>Hello, world!</h1>;
-}
-
-root.render(<Frontend />);
-```
-
-Then, run index.ts
-
-```sh
-bun --hot ./index.ts
-```
-
-For more information, read the Bun API docs in `node_modules/bun-types/docs/**.mdx`.
+- Each domain lives in `src/domain/<name>/{domain,application,infrastructure}`.
+- Throw an `AppError` subclass (`ValidationError`, `ConflictError`, `NotFoundError`, `UnauthorizedError`) for anything the client caused; a plain `Error` becomes a 500.
+- Controllers take the tenant from `getTenantId(req)` only, never from params, query or body.
+- Schema changes are new Knex migrations in `src/infra/database/migrations`; this service owns all migrations.
+- Tests are `*.test.ts` next to the code they cover.

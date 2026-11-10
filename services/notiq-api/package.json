@@ -18,16 +18,16 @@
     "build": "docker build -t notiq-api ."
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.5",
+    "@types/bcrypt": "^6.0.0",
     "@types/bun": "latest",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@biomejs/biome": "2.6.5"
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
-    "@types/bcrypt": "^6.0.0",
-    "@types/express": "^5.0.6",
     "amqplib": "^2.0.1",
     "bcrypt": "^6.0.0",
     "express": "^5.2.1",

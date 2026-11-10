@@ -2,7 +2,7 @@
 
 `notiq-worker` is the asynchronous queue consumer service for **Notiq**.
 
-It listens to RabbitMQ channel queues (`email_queue`, `in_app_queue`, `sms_queue`) and executes notification delivery via third-party provider adapters, recording logs and statuses back to PostgreSQL.
+It listens to RabbitMQ channel queues (`email.queue`, `in_app.queue`, `sms.queue`) and executes notification delivery via third-party provider adapters, recording logs and statuses back to PostgreSQL.
 
 ## Development
 

@@ -11,6 +11,8 @@ export interface AccessTokenPayload {
 }
 
 const MIN_SECRET_LENGTH = 32;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export class TokenService {
   public constructor(private readonly config: TokenServiceConfig) {
@@ -36,6 +38,16 @@ export class TokenService {
     });
   }
 
+  /** Signs a token and reports its lifetime in seconds. */
+  public issue(payload: AccessTokenPayload): {
+    token: string;
+    expiresIn: number;
+  } {
+    const token = this.sign(payload);
+    const decoded = jwt.decode(token) as { iat: number; exp: number };
+    return { token, expiresIn: decoded.exp - decoded.iat };
+  }
+
   public verify(token: string): AccessTokenPayload {
     try {
       const decoded = jwt.verify(token, this.config.secret, {
@@ -43,6 +55,10 @@ export class TokenService {
       });
 
       if (typeof decoded === "string" || !decoded.sub) {
+        throw new UnauthorizedError("Invalid or expired token");
+      }
+
+      if (!UUID_PATTERN.test(decoded.sub)) {
         throw new UnauthorizedError("Invalid or expired token");
       }
 

@@ -10,6 +10,7 @@ import { ListApiKeysUseCase } from "./application/use-cases/list-api-keys.use-ca
 import { RevokeApiKeyUseCase } from "./application/use-cases/revoke-api-key.use-case";
 import { ApiKeyEntity } from "./domain/entities/api-key.entity";
 import { Tenant } from "./domain/entities/tenant.entity";
+import { ApiKeyAlreadyRevokedError } from "./domain/errors/api-key-already-revoked.error";
 import { ApiKeyNameInvalidError } from "./domain/errors/api-key-name-invalid.error";
 import { ApiKeyNotFoundError } from "./domain/errors/api-key-not-found.error";
 import { ApiKeyRevokedError } from "./domain/errors/api-key-revoked.error";
@@ -73,18 +74,6 @@ class MockTenantRepository implements ITenantRepository {
         return t;
       }
     }
-    return null;
-  }
-
-  async list(page: number, limit: number): Promise<Tenant[]> {
-    const active = Array.from(this.tenants.values()).filter(
-      (t) => t.deletedAt === null,
-    );
-    const offset = Math.max(0, (page - 1) * limit);
-    return active.slice(offset, offset + limit);
-  }
-
-  async findByApiKey(_apiKey: string): Promise<Tenant | null> {
     return null;
   }
 }
@@ -166,7 +155,7 @@ describe("ApiKeyEntity Domain Entity", () => {
     expect(entity.revokedAt).toBeInstanceOf(Date);
     expect(entity.events.length).toBe(1);
 
-    expect(() => entity.revoke()).toThrow(ApiKeyRevokedError);
+    expect(() => entity.revoke()).toThrow(ApiKeyAlreadyRevokedError);
   });
 });
 

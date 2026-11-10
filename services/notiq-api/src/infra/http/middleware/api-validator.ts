@@ -12,7 +12,8 @@ export function createApiValidator(
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
-    const apiHeader = req.headers["x-api-key"] || req.headers["X-API-KEY"];
+    // Node lowercases incoming header names.
+    const apiHeader = req.headers["x-api-key"];
 
     if (!apiHeader || typeof apiHeader !== "string") {
       res.status(401).json({
@@ -40,7 +41,8 @@ export function createApiValidator(
         res.status(401).json({
           status: "error",
           code: "UNAUTHORIZED",
-          message: err.message || "Invalid or revoked API key",
+          // Same answer for unknown, malformed and revoked keys.
+          message: "Invalid API key",
         });
         return;
       }

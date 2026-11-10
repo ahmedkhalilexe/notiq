@@ -1,3 +1,4 @@
+import { ConflictError } from "../../../shared/errors/conflict-error";
 import type { DomainEvent } from "../../../shared/events";
 import { TenantEmailInvalidError } from "../errors/tenant-email-invalid.error";
 import { TenantNameInvalidError } from "../errors/tenant-name-invalid.error";
@@ -40,7 +41,14 @@ export class Tenant {
 
     const id = crypto.randomUUID();
 
-    const tenant = new Tenant(id, name, email, password, new Date(), null);
+    const tenant = new Tenant(
+      id,
+      trimmedName,
+      normalizedEmail,
+      password,
+      new Date(),
+      null,
+    );
 
     tenant._events.push(new TenantCreatedEvent(tenant.id));
 
@@ -49,7 +57,7 @@ export class Tenant {
 
   public delete(): void {
     if (this.deletedAt != null) {
-      throw Error("tenant already deleted");
+      throw new ConflictError("tenant already deleted");
     }
 
     this._deletedAt = new Date();

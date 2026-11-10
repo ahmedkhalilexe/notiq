@@ -53,44 +53,4 @@ export class TenantRepository implements ITenantRepository {
     if (!raw) return null;
     return TenantMapper.toDomain(raw);
   }
-
-  async list(page: number, limit: number): Promise<Tenant[]> {
-    const offset = Math.max(0, (page - 1) * limit);
-
-    const raw = await this.db("tenants")
-      .whereNull("tenants.deleted_at")
-      .select(
-        "tenants.id",
-        "tenants.name",
-        "tenants.email",
-        "tenants.password",
-        "tenants.created_at",
-        "tenants.deleted_at",
-      )
-      .orderBy("tenants.created_at", "desc")
-      .offset(offset)
-      .limit(limit);
-
-    return raw.map((tenantRaw) => TenantMapper.toDomain(tenantRaw));
-  }
-
-  async findByApiKey(apiKeyHash: string): Promise<Tenant | null> {
-    const raw = await this.db("tenant_api")
-      .join("tenants", "tenant_api.tenant_id", "tenants.id")
-      .where("tenant_api.key", apiKeyHash)
-      .whereNull("tenant_api.revoked_at")
-      .whereNull("tenants.deleted_at")
-      .select(
-        "tenants.id",
-        "tenants.name",
-        "tenants.email",
-        "tenants.password",
-        "tenants.created_at",
-        "tenants.deleted_at",
-      )
-      .first();
-
-    if (!raw) return null;
-    return TenantMapper.toDomain(raw);
-  }
 }

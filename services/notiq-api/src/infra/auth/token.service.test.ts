@@ -63,4 +63,18 @@ describe("TokenService", () => {
     });
     expect(() => service.verify(token)).toThrow(UnauthorizedError);
   });
+
+  it("rejects a subject that is not a tenant id", () => {
+    const token = jwt.sign({}, SECRET, {
+      algorithm: "HS256",
+      subject: "not-a-uuid",
+    });
+    expect(() => service.verify(token)).toThrow(UnauthorizedError);
+  });
+
+  it("issue() returns the token and its lifetime in seconds", () => {
+    const { token, expiresIn } = service.issue({ tenantId: TENANT_ID });
+    expect(service.verify(token)).toEqual({ tenantId: TENANT_ID });
+    expect(expiresIn).toBe(3600);
+  });
 });

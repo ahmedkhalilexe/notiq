@@ -1,3 +1,4 @@
+import { ConflictError } from "../../../shared/errors/conflict-error";
 import type { DomainEvent } from "../../../shared/events";
 import { SubscriberIdentifierMissingError } from "../errors/subscriber-identifier-missing.error";
 import { SubscriberCreatedEvent } from "../events/subscriber-created.event";
@@ -130,7 +131,7 @@ export class Subscriber {
     phone?: string | null;
   }): void {
     if (this._deletedAt !== null) {
-      throw new Error("Cannot update a deleted subscriber");
+      throw new ConflictError("Cannot update a deleted subscriber");
     }
 
     const newExternalId =
@@ -174,7 +175,9 @@ export class Subscriber {
     value?: string | null,
   ): void {
     if (this._deletedAt !== null) {
-      throw new Error("Cannot update preferences for a deleted subscriber");
+      throw new ConflictError(
+        "Cannot update preferences for a deleted subscriber",
+      );
     }
 
     const pref = SubscriberChannelPreference.create(
@@ -200,7 +203,7 @@ export class Subscriber {
 
   public delete(): void {
     if (this._deletedAt !== null) {
-      throw new Error("Subscriber already deleted");
+      throw new ConflictError("Subscriber already deleted");
     }
 
     this._deletedAt = new Date();

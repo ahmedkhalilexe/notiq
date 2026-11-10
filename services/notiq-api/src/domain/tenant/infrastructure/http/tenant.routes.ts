@@ -8,7 +8,7 @@ export function createTenantRoutes(
 ): Router {
   const router = Router();
 
-  // Public until signup exists.
+  // Public: this is tenant signup. Log in via POST /auth/login.
   router.post(
     "/",
     asyncHandler((req, res) => controller.create(req, res)),

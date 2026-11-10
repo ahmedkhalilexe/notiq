@@ -1,6 +1,6 @@
 import type { DomainEvent } from "../../../shared/events";
+import { ApiKeyAlreadyRevokedError } from "../errors/api-key-already-revoked.error";
 import { ApiKeyNameInvalidError } from "../errors/api-key-name-invalid.error";
-import { ApiKeyRevokedError } from "../errors/api-key-revoked.error";
 import { ApiKeyCreatedEvent } from "../events/api-key-created.event";
 import { ApiKeyRevokedEvent } from "../events/api-key-revoked.event";
 
@@ -46,7 +46,7 @@ export class ApiKeyEntity {
 
   public revoke(): void {
     if (this._revokedAt !== null) {
-      throw new ApiKeyRevokedError("Api key is already revoked");
+      throw new ApiKeyAlreadyRevokedError();
     }
 
     this._revokedAt = new Date();

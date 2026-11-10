@@ -6,21 +6,43 @@ It provides tenant management, API key lifecycle management, subscriber manageme
 
 ---
 
-## 🔑 API Key Lifecycle & Authentication
+## 🔑 Authentication
 
-API keys are decoupled from tenant creation and follow an independent lifecycle: **Create ➔ List ➔ Revoke ➔ Verify (Use)**.
+Two mechanisms, for two kinds of caller:
 
-- **Security & Storage**:
-  - Keys use the format `ntk_<32 hex characters>`.
-  - Keys are stored securely in PostgreSQL as **SHA-256 hashes**.
-  - The raw plaintext key is returned **only once** upon creation.
-- **Endpoints**:
-  - `POST /v1/api/tenants/:id/api-keys` - Generate a new named key (e.g. `{ "name": "Production" }`).
-  - `GET /v1/api/tenants/:id/api-keys` - List all keys for a tenant (`id`, `name`, `status`, `created_at`, `revoked_at`). Plaintext keys and hashes are never exposed.
-  - `DELETE /v1/api/tenants/:id/api-keys/:keyId` - Revoke a key. Revoked keys are retained with a `revoked_at` timestamp for audit history.
-- **Authentication Middleware (`apiValidator`)**:
-  - Protects routes by requiring `x-api-key: ntk_...` (or `X-API-KEY`).
-  - Hashes the incoming key, validates it against non-revoked records, checks that the tenant is active, and injects `req.tenant` and `req.tenantId` onto the Express request object.
+- **JWT (management routes)** - tenants, API keys, subscribers and templates.
+  - `POST /v1/api/tenants` - sign up (public).
+  - `POST /v1/api/auth/login` - `{ "email", "password" }` returns `{ access_token, token_type: "Bearer", expires_in, tenant }`.
+  - Send `Authorization: Bearer <access_token>` on every other management route.
+  - Requires `JWT_SECRET` (at least 32 characters; the API refuses to start without it) and optional `JWT_EXPIRES_IN` (default `1h`).
+- **API key (`x-api-key`)** - reserved for the notification-trigger routes; the `apiValidator` middleware is not mounted on management routes.
+
+### API key lifecycle
+
+Create ➔ List ➔ Revoke ➔ Verify. All routes act on the token's tenant:
+
+- `POST /v1/api/api-keys` - generate a named key (`{ "name": "Production" }`). The plaintext key (`ntk_<32 hex characters>`) is returned **only once**.
+- `GET /v1/api/api-keys` - list keys (`id`, `name`, `status`, `created_at`, `revoked_at`). Plaintext keys and hashes are never exposed.
+- `DELETE /v1/api/api-keys/:keyId` - revoke a key. Revoked keys are kept with a `revoked_at` timestamp; revoking twice returns `409`.
+
+Keys are stored as **SHA-256 hashes**.
+
+## ⚠️ Error responses
+
+Every error, including unknown routes and malformed bodies, is JSON:
+
+```json
+{ "status": "error", "code": "VALIDATION_ERROR", "message": "..." }
+```
+
+| Status | When                                                                                         |
+| :----- | :------------------------------------------------------------------------------------------- |
+| `400`  | Validation failure, or a body that is not valid JSON (`INVALID_JSON`)                        |
+| `401`  | Missing/invalid token or credentials                                                         |
+| `404`  | Resource not found (also for other tenants' resources), or unknown route (`ROUTE_NOT_FOUND`) |
+| `409`  | Duplicate resource, including concurrent creates caught by a unique index                    |
+| `413`  | Body over the 100 KB limit                                                                   |
+| `500`  | Unexpected error (details are logged, never returned)                                        |
 
 ---
 

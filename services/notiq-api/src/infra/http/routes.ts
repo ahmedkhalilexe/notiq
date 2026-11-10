@@ -22,9 +22,12 @@ import { CreateTenantUseCase } from "../../domain/tenant/application/use-cases/c
 import { DeleteTenantUsecase } from "../../domain/tenant/application/use-cases/delete-tenant.use-case";
 import { FindByIdTenantUsecase } from "../../domain/tenant/application/use-cases/get-tenant.use-case";
 import { ListApiKeysUseCase } from "../../domain/tenant/application/use-cases/list-api-keys.use-case";
+import { LoginTenantUseCase } from "../../domain/tenant/application/use-cases/login-tenant.use-case";
 import { RevokeApiKeyUseCase } from "../../domain/tenant/application/use-cases/revoke-api-key.use-case";
 import { ApiKeyController } from "../../domain/tenant/infrastructure/http/api-key.controller";
 import { createApiKeyRoutes } from "../../domain/tenant/infrastructure/http/api-key.routes";
+import { AuthController } from "../../domain/tenant/infrastructure/http/auth.controller";
+import { createAuthRoutes } from "../../domain/tenant/infrastructure/http/auth.routes";
 import { TenantController } from "../../domain/tenant/infrastructure/http/tenant.controller";
 import { createTenantRoutes } from "../../domain/tenant/infrastructure/http/tenant.routes";
 import { ApiKeyRepository } from "../../domain/tenant/infrastructure/persistence/api-key.repository";
@@ -80,6 +83,12 @@ export function createRoutes(): Router {
   const tokenService = TokenService.fromEnv();
   const authenticate = createJwtAuth(tokenService, findByIdTenantUsecase);
 
+  const authController = new AuthController(
+    new LoginTenantUseCase(tenantRepository),
+    tokenService,
+  );
+
+  router.use("/auth", createAuthRoutes(authController));
   router.use("/tenants", createTenantRoutes(tenantController, authenticate));
   router.use("/api-keys", authenticate, createApiKeyRoutes(apiKeyController));
 
@@ -94,10 +103,7 @@ export function createRoutes(): Router {
     consoleEventDispatcher,
   );
   const getTemplateUsecase = new GetTemplateUsecase(templateRepository);
-  const listTemplateUsecase = new ListTemplateUsecase(
-    templateRepository,
-    consoleEventDispatcher,
-  );
+  const listTemplateUsecase = new ListTemplateUsecase(templateRepository);
   const deleteTemplateUsecase = new DeleteTemplateUsecase(
     templateRepository,
     consoleEventDispatcher,

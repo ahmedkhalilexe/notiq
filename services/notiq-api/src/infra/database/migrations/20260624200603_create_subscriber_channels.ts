@@ -19,4 +19,6 @@ export async function up(knex: Knex): Promise<void> {
   });
 }
 
-export async function down(_knex: Knex): Promise<void> {}
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.dropTable("subscriber_channels");
+}

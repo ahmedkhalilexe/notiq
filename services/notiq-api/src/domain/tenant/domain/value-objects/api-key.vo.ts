@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { TenantApiKeyInvalidError } from "../errors/tenant-api-key-invalid.error";
 
 const API_KEY_PATTERN = /^ntk_[0-9a-f]{32}$/;
@@ -6,7 +6,7 @@ export class ApiKey {
   private constructor(public readonly value: string) {}
 
   static generate(): ApiKey {
-    const raw = `ntk_${randomUUID().replace(/-/g, "")}`;
+    const raw = `ntk_${randomBytes(16).toString("hex")}`;
     return new ApiKey(raw);
   }
 
